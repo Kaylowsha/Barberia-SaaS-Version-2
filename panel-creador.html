@@ -4,1430 +4,320 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel del Creador - Barbería SaaS</title>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Configuración -->
     <script src="config.js"></script>
-    
-    <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* Animaciones personalizadas */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-        
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Estados de barbería */
-        .estado-pagado { border-left: 4px solid #10b981; }
-        .estado-trial { border-left: 4px solid #f59e0b; }
-        .estado-expirado { border-left: 4px solid #ef4444; }
-        .estado-bloqueado { border-left: 4px solid #6b7280; }
-
-        /* OPTIMIZACIÓN MÓVIL ESPECÍFICA */
-        
-        /* Header sticky */
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.95);
-        }
-        
-        /* Botones táctiles móviles (44px mínimo) */
-        .btn-mobile {
-            min-height: 44px;
-            min-width: 44px;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Cards optimizados para móvil */
-        .card-mobile {
-            margin-bottom: 16px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-        }
-        
-        .card-mobile:active {
-            transform: scale(0.98);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Texto optimizado para móvil */
-        @media (max-width: 768px) {
-            .text-mobile-lg { font-size: 1.125rem; line-height: 1.5; }
-            .text-mobile-base { font-size: 1rem; line-height: 1.5; }
-            .text-mobile-sm { font-size: 0.875rem; line-height: 1.4; }
-            
-            /* Spacing móvil */
-            .p-mobile { padding: 1rem; }
-            .gap-mobile { gap: 0.75rem; }
-            
-            /* Botones móvil */
-            .btn-mobile-primary {
-                background: #7c3aed;
-                color: white;
-                padding: 12px 16px;
-                border-radius: 8px;
-                font-weight: 600;
-                min-height: 44px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                touch-action: manipulation;
-            }
-            
-            .btn-mobile-secondary {
-                background: #f3f4f6;
-                color: #374151;
-                padding: 10px 14px;
-                border-radius: 6px;
-                font-weight: 500;
-                min-height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                touch-action: manipulation;
-            }
-            
-            /* Full screen modal en móvil */
-            .modal-mobile {
-                position: fixed;
-                inset: 0;
-                background: white;
-                z-index: 50;
-                overflow-y: auto;
-            }
-            
-            /* Header móvil compacto */
-            .header-mobile {
-                padding: 12px 16px;
-                background: white;
-                border-bottom: 1px solid #e5e7eb;
-            }
-            
-            /* Métricas compactas móvil */
-            .metrics-mobile {
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
-                gap: 8px;
-                padding: 12px 16px;
-                background: white;
-                border-bottom: 1px solid #e5e7eb;
-            }
-            
-            .metric-mobile {
-                text-align: center;
-                padding: 8px 4px;
-            }
-            
-            .metric-mobile-number {
-                font-size: 1.25rem;
-                font-weight: 700;
-                line-height: 1.2;
-            }
-            
-            .metric-mobile-label {
-                font-size: 0.75rem;
-                color: #6b7280;
-                line-height: 1.2;
-            }
-        }
-        
-        /* Menú hamburguesa */
-        .hamburger {
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-        }
-        
-        .hamburger span {
-            display: block;
-            height: 2px;
-            width: 100%;
-            background: #374151;
-            border-radius: 1px;
-            transition: 0.3s ease;
-        }
-        
-        .hamburger.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-        
-        .hamburger.active span:nth-child(2) {
-            opacity: 0;
-        }
-        
-        .hamburger.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(7px, -6px);
-        }
-        
-        /* Menu móvil overlay */
-        .mobile-menu {
-            position: fixed;
-            top: 60px;
-            left: 0;
-            right: 0;
-            background: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 45;
-            transform: translateY(-100%);
-            transition: transform 0.3s ease;
-        }
-        
-        .mobile-menu.show {
-            transform: translateY(0);
-        }
-        
-        .mobile-menu-item {
-            display: block;
-            padding: 16px 20px;
-            border-bottom: 1px solid #f3f4f6;
-            color: #374151;
-            font-weight: 500;
-            transition: background 0.2s ease;
-        }
-        
-        .mobile-menu-item:hover,
-        .mobile-menu-item.active {
-            background: #f3f4f6;
-            color: #7c3aed;
-        }
-        
-        /* Swipe animations */
-        .swipe-actions {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .swipe-content {
-            transition: transform 0.2s ease;
-        }
-        
-        .swipe-background {
-            position: absolute;
-            top: 0;
-            right: 0;
-            height: 100%;
-            background: #ef4444;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            color: white;
-            font-weight: 600;
-        }
-    </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Pantalla de Login -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full fade-in">
-            <div class="text-center mb-8">
-                <i class="fas fa-crown text-6xl text-purple-600 mb-4"></i>
-                <h1 class="text-3xl font-bold text-gray-800">Panel del Creador</h1>
-                <p class="text-gray-600 mt-2">Control Total SaaS</p>
-            </div>
-            
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-envelope mr-2"></i>Email del Creador
-                    </label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        placeholder="creador@email.com"
-                        required
-                    >
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-lock mr-2"></i>Contraseña Maestra
-                    </label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        placeholder="••••••••"
-                        required
-                    >
-                </div>
-                
-                <button 
-                    type="submit" 
-                    class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-200"
-                >
-                    <i class="fas fa-sign-in-alt mr-2"></i>Acceder al Panel
-                </button>
-            </form>
-            
-            <div id="loginError" class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg hidden">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                <span id="loginErrorText"></span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Panel Principal (oculto inicialmente) -->
-    <div id="mainPanel" class="hidden min-h-screen bg-gray-50">
-        <!-- Header Optimizado Móvil -->
-        <header class="sticky-header header-mobile shadow-lg border-b-4 border-purple-500">
-            <div class="flex justify-between items-center">
-                <!-- Logo y título compacto -->
-                <div class="flex items-center">
-                    <i class="fas fa-crown text-2xl text-purple-600 mr-2 md:mr-4"></i>
-                    <div class="hidden md:block">
-                        <h1 class="text-xl md:text-2xl font-bold text-gray-800">Panel del Creador</h1>
-                        <p class="text-sm text-gray-600">Control Total SaaS</p>
-                    </div>
-                    <div class="md:hidden">
-                        <h1 class="text-lg font-bold text-gray-800">Panel</h1>
-                    </div>
-                </div>
-                
-                <!-- Controles móvil/desktop -->
-                <div class="flex items-center space-x-2 md:space-x-4">
-                    <!-- Usuario (oculto en móvil pequeño) -->
-                    <div class="hidden sm:flex items-center space-x-2">
-                        <span id="creadorName" class="text-sm md:text-base text-gray-700 font-semibold"></span>
-                        <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">Creador</span>
-                    </div>
-                    
-                    <!-- Menú hamburguesa (solo móvil) -->
-                    <button class="md:hidden hamburger btn-mobile" onclick="toggleMobileMenu()" id="hamburgerBtn">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </button>
-                    
-                    <!-- Botón salir (solo desktop) -->
-                    <button onclick="logout()" class="hidden md:block text-red-600 hover:text-red-800 btn-mobile">
-                        <i class="fas fa-sign-out-alt"></i> Salir
+    <div class="min-h-screen">
+        <!-- Header -->
+        <nav class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold">
+                        <i class="fas fa-crown mr-2"></i>Panel del Creador
+                    </h1>
+                    <button onclick="location.href='index.html'" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver al Sistema
                     </button>
                 </div>
             </div>
-        </header>
-
-        <!-- Métricas Compactas Móvil -->
-        <div class="md:hidden metrics-mobile">
-            <div class="metric-mobile">
-                <div id="totalBarberias-mobile" class="metric-mobile-number text-blue-600">-</div>
-                <div class="metric-mobile-label">Barberias</div>
-            </div>
-            <div class="metric-mobile">
-                <div id="ingresosProyectados-mobile" class="metric-mobile-number text-green-600">-</div>
-                <div class="metric-mobile-label">Ingresos</div>
-            </div>
-            <div class="metric-mobile">
-                <div id="totalAlertas-mobile" class="metric-mobile-number text-red-600">-</div>
-                <div class="metric-mobile-label">Alertas</div>
-            </div>
-        </div>
-
-        <!-- Menú Móvil Desplegable -->
-        <nav class="mobile-menu" id="mobileMenu">
-            <a href="#" class="mobile-menu-item" onclick="loadTab('dashboard'); closeMobileMenu()">
-                <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
-            </a>
-            <a href="#" class="mobile-menu-item" onclick="loadTab('barberias'); closeMobileMenu()">
-                <i class="fas fa-building mr-3"></i>Barberias
-            </a>
-            <a href="#" class="mobile-menu-item" onclick="loadTab('metricas'); closeMobileMenu()">
-                <i class="fas fa-chart-line mr-3"></i>Metricas
-            </a>
-            <a href="#" class="mobile-menu-item" onclick="loadTab('facturacion'); closeMobileMenu()">
-                <i class="fas fa-dollar-sign mr-3"></i>Facturacion
-            </a>
-            <a href="#" class="mobile-menu-item" onclick="logout()">
-                <i class="fas fa-sign-out-alt mr-3"></i>Cerrar Sesion
-            </a>
         </nav>
 
-        <!-- Tabs de Navegación (solo desktop) -->
-        <div class="hidden md:block bg-white border-b">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="flex space-x-1 overflow-x-auto py-2">
-                    <button 
-                        onclick="loadTab('dashboard')"
-                        id="tab-dashboard"
-                        class="px-4 py-2 rounded-t-lg font-medium text-white bg-purple-600 tab-button"
-                    >
-                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-                    </button>
-                    <button 
-                        onclick="loadTab('barberias')"
-                        id="tab-barberias"
-                        class="px-4 py-2 rounded-t-lg font-medium text-gray-600 hover:text-purple-600 hover:bg-gray-50 transition-colors tab-button"
-                    >
-                        <i class="fas fa-building mr-2"></i>Barberias
-                    </button>
-                    <button 
-                        onclick="loadTab('metricas')"
-                        id="tab-metricas"
-                        class="px-4 py-2 rounded-t-lg font-medium text-gray-600 hover:text-purple-600 hover:bg-gray-50 transition-colors tab-button"
-                    >
-                        <i class="fas fa-chart-line mr-2"></i>Metricas
-                    </button>
-                    <button 
-                        onclick="loadTab('facturacion')"
-                        id="tab-facturacion"
-                        class="px-4 py-2 rounded-t-lg font-medium text-gray-600 hover:text-purple-600 hover:bg-gray-50 transition-colors tab-button"
-                    >
-                        <i class="fas fa-dollar-sign mr-2"></i>Facturacion
-                    </button>
-                </div>
-            </div>
-        </div>
-        
         <!-- Contenido Principal -->
-        <div class="max-w-7xl mx-auto px-4 py-4 md:py-6">
-            <div id="contentArea" class="fade-in">
-                <!-- El contenido se cargará dinámicamente -->
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <!-- Métricas Generales -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="text-sm text-gray-600">Total Barberías</div>
+                    <div class="text-3xl font-bold text-blue-600" id="totalBarberias">0</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="text-sm text-gray-600">Activas</div>
+                    <div class="text-3xl font-bold text-green-600" id="barberiasActivas">0</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="text-sm text-gray-600">En Trial</div>
+                    <div class="text-3xl font-bold text-yellow-600" id="barberiasEnTrial">0</div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="text-sm text-gray-600">Ingresos/Mes</div>
+                    <div class="text-3xl font-bold text-purple-600" id="ingresosMensuales">$0</div>
+                </div>
+            </div>
+
+            <!-- Botón Nueva Barbería -->
+            <div class="mb-6">
+                <button onclick="mostrarModalNuevaBarberia()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>Nueva Barbería
+                </button>
+            </div>
+
+            <!-- Tabla de Barberías -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b">
+                    <h2 class="text-xl font-bold">Gestión de Barberías</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barbería</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trial Hasta</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuarios</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaBarberias" class="bg-white divide-y divide-gray-200">
+                            <!-- Se llenará dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg">
-            <div class="loading-spinner mx-auto"></div>
-            <p class="mt-4 text-gray-600">Procesando...</p>
+
+    <!-- Modal Nueva Barbería -->
+    <div id="modalNuevaBarberia" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-xl font-bold mb-4">Nueva Barbería</h3>
+            <form id="formNuevaBarberia">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de la Barbería</label>
+                        <input type="text" id="nombreBarberia" class="w-full px-4 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email del Admin</label>
+                        <input type="email" id="emailAdmin" class="w-full px-4 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Admin</label>
+                        <input type="text" id="nombreAdmin" class="w-full px-4 py-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Días de Trial</label>
+                        <input type="number" id="diasTrial" value="15" class="w-full px-4 py-2 border rounded-lg" required>
+                    </div>
+                </div>
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        Crear
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-    
-    <!-- Script Principal -->
+
     <script>
-        // ===============================
-        // CONFIGURACIÓN DE SUPABASE
-        // ===============================
-        const SUPABASE_URL = SUPABASE_CONFIG.url;
-        const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey;
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // Variables globales
-        let currentCreador = null;
-        let todasLasBarberias = [];
-        let mobileMenuOpen = false;
+        // Configuración Supabase
+        const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
 
-        // ===============================
-        // FUNCIONES MÓVILES
-        // ===============================
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenu');
-            const hamburger = document.getElementById('hamburgerBtn');
-            
-            mobileMenuOpen = !mobileMenuOpen;
-            
-            if (mobileMenuOpen) {
-                menu.classList.add('show');
-                hamburger.classList.add('active');
-            } else {
-                menu.classList.remove('show');
-                hamburger.classList.remove('active');
-            }
-        }
-        
-        function closeMobileMenu() {
-            const menu = document.getElementById('mobileMenu');
-            const hamburger = document.getElementById('hamburgerBtn');
-            
-            mobileMenuOpen = false;
-            menu.classList.remove('show');
-            hamburger.classList.remove('active');
-        }
-        
-        // Cerrar menú al tocar fuera
-        document.addEventListener('click', function(e) {
-            const menu = document.getElementById('mobileMenu');
-            const hamburger = document.getElementById('hamburgerBtn');
-            
-            if (mobileMenuOpen && !menu.contains(e.target) && !hamburger.contains(e.target)) {
-                closeMobileMenu();
-            }
+        // Cargar datos al iniciar
+        window.addEventListener('load', () => {
+            cargarBarberias();
+            cargarMetricas();
         });
-        
-        // Actualizar métricas móviles
-        function updateMobileMetrics() {
-            // Verificar que estamos en móvil y que existen los elementos
-            const totalMobile = document.getElementById('totalBarberias-mobile');
-            const ingresosMobile = document.getElementById('ingresosProyectados-mobile');
-            const alertasMobile = document.getElementById('totalAlertas-mobile');
-            
-            // Solo ejecutar si los elementos móviles existen
-            if (!totalMobile || !ingresosMobile || !alertasMobile) {
-                return; // Salir silenciosamente si no estamos en móvil
-            }
-            
-            const totalElement = document.getElementById('totalBarberias');
-            const ingresosElement = document.getElementById('ingresosProyectados');
-            const alertasElement = document.getElementById('totalAlertas');
-            
-            if (totalElement && totalMobile) {
-                totalMobile.textContent = totalElement.textContent;
-            }
-            
-            if (ingresosElement && ingresosMobile) {
-                const ingresos = ingresosElement.textContent;
-                const ingresosSinSimbolo = ingresos.replace('$', '').replace(/\./g, '');
-                const numero = parseInt(ingresosSinSimbolo);
-                if (numero >= 1000000) {
-                    ingresosMobile.textContent = `$${Math.round(numero/1000000)}M`;
-                } else if (numero >= 1000) {
-                    ingresosMobile.textContent = `$${Math.round(numero/1000)}K`;
-                } else {
-                    ingresosMobile.textContent = ingresos;
-                }
-            }
-            
-            if (alertasElement && alertasMobile) {
-                alertasMobile.textContent = alertasElement.textContent;
-            }
-        }
 
-        // ===============================
-        // FUNCIONES DE FECHA CHILE
-        // ===============================
-        function getFechaChile() {
-            const ahora = new Date();
-            const fechaChile = new Date(ahora.toLocaleString("en-US", {timeZone: "America/Santiago"}));
-            const año = fechaChile.getFullYear();
-            const mes = String(fechaChile.getMonth() + 1).padStart(2, '0');
-            const dia = String(fechaChile.getDate()).padStart(2, '0');
-            return `${año}-${mes}-${dia}`;
-        }
-
-        function getTimestampChile() {
-            const ahora = new Date();
-            const fechaChile = new Date(ahora.toLocaleString("en-US", {timeZone: "America/Santiago"}));
-            return fechaChile.toISOString();
-        }
-
-        function calcularDiasRestantes(fechaHasta) {
-            if (!fechaHasta) return 0;
-            
-            const hoy = new Date(getFechaChile());
-            const hasta = new Date(fechaHasta);
-            const diferencia = hasta.getTime() - hoy.getTime();
-            const dias = Math.ceil(diferencia / (1000 * 3600 * 24));
-            
-            return Math.max(0, dias);
-        }
-
-        // ===============================
-        // FUNCIONES DE AUTENTICACIÓN
-        // ===============================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            showLoading();
-            hideError();
-            
+        async function cargarMetricas() {
             try {
-                // Validación específica del creador
-                if (email !== 'israelparancan.n@gmail.com' || password !== 'creador123') {
-                    showError('Acceso denegado. Solo el creador puede acceder.');
-                    hideLoading();
-                    return;
-                }
-                
-                // Login exitoso
-                currentCreador = {
-                    email: email,
-                    nombre: 'Israel Parancan',
-                    role: 'creador'
-                };
-                
-                initializePanel();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showError('Error al iniciar sesion. Intenta nuevamente.');
-            }
-            
-            hideLoading();
-        });
-        
-        function showError(message) {
-            const errorDiv = document.getElementById('loginError');
-            const errorText = document.getElementById('loginErrorText');
-            errorText.textContent = message;
-            errorDiv.classList.remove('hidden');
-        }
-        
-        function hideError() {
-            document.getElementById('loginError').classList.add('hidden');
-        }
-        
-        function showLoading() {
-            document.getElementById('loadingSpinner').classList.remove('hidden');
-        }
-        
-        function hideLoading() {
-            document.getElementById('loadingSpinner').classList.add('hidden');
-        }
-        
-        // ===============================
-        // INICIALIZACIÓN DEL PANEL
-        // ===============================
-        function initializePanel() {
-            // Ocultar login, mostrar panel
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainPanel').classList.remove('hidden');
-            
-            // Actualizar información del creador
-            document.getElementById('creadorName').textContent = currentCreador.nombre;
-            
-            // Cargar dashboard inicial
-            loadTab('dashboard');
-        }
-        
-        // ===============================
-        // NAVEGACIÓN ENTRE TABS
-        // ===============================
-        function loadTab(tabId) {
-            // Actualizar estado visual de tabs
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('bg-purple-600', 'text-white');
-                btn.classList.add('text-gray-600');
-            });
-            
-            const activeTab = document.getElementById(`tab-${tabId}`);
-            if (activeTab) {
-                activeTab.classList.remove('text-gray-600');
-                activeTab.classList.add('bg-purple-600', 'text-white');
-            }
-            
-            // Cargar contenido según el tab
-            switch(tabId) {
-                case 'dashboard':
-                    loadDashboard();
-                    break;
-                case 'barberias':
-                    loadGestionBarberias();
-                    break;
-                case 'metricas':
-                    loadMetricas();
-                    break;
-                case 'facturacion':
-                    loadFacturacion();
-                    break;
-                default:
-                    document.getElementById('contentArea').innerHTML = '<p>Seccion en desarrollo...</p>';
-            }
-        }
-        
-        // ===============================
-        // DASHBOARD PRINCIPAL
-        // ===============================
-        async function loadDashboard() {
-            document.getElementById('contentArea').innerHTML = `
-                <div class="space-y-4 md:space-y-6">
-                    <!-- Métricas Globales (solo desktop) -->
-                    <div class="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
-                            <div class="flex items-center">
-                                <div class="p-3 bg-blue-100 rounded-full">
-                                    <i class="fas fa-building text-2xl text-blue-600"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-lg font-semibold text-gray-700">Barberias</h3>
-                                    <div id="totalBarberias" class="text-3xl font-bold text-blue-600">-</div>
-                                    <p id="estadoBarberias" class="text-sm text-gray-500">Cargando...</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
-                            <div class="flex items-center">
-                                <div class="p-3 bg-green-100 rounded-full">
-                                    <i class="fas fa-dollar-sign text-2xl text-green-600"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-lg font-semibold text-gray-700">Ingresos Proyectados</h3>
-                                    <div id="ingresosProyectados" class="text-3xl font-bold text-green-600">-</div>
-                                    <p id="detailIngresos" class="text-sm text-gray-500">Cargando...</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-red-500">
-                            <div class="flex items-center">
-                                <div class="p-3 bg-red-100 rounded-full">
-                                    <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-lg font-semibold text-gray-700">Alertas</h3>
-                                    <div id="totalAlertas" class="text-3xl font-bold text-red-600">-</div>
-                                    <p id="detalleAlertas" class="text-sm text-gray-500">Cargando...</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                const { data: barberias, error } = await supabase
+                    .from('barberias')
+                    .select('*');
+
+                if (!error && barberias) {
+                    const total = barberias.length;
+                    const activas = barberias.filter(b => b.activa).length;
+                    const enTrial = barberias.filter(b => b.plan === 'trial' && b.activa).length;
+                    const pagando = barberias.filter(b => b.plan === 'premium' && b.activa).length;
                     
-                    <!-- Resumen Rápido de Barberías -->
-                    <div class="bg-white rounded-lg shadow card-mobile">
-                        <div class="p-mobile border-b">
-                            <h3 class="text-mobile-lg font-semibold">Atencion Inmediata</h3>
-                        </div>
-                        <div id="alertasRapidas" class="p-mobile">
-                            <div class="text-center py-8">
-                                <div class="loading-spinner mx-auto"></div>
-                                <p class="mt-4 text-gray-600 text-mobile-base">Cargando alertas...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Cargar datos del dashboard
-            await cargarDatosDashboard();
+                    document.getElementById('totalBarberias').textContent = total;
+                    document.getElementById('barberiasActivas').textContent = activas;
+                    document.getElementById('barberiasEnTrial').textContent = enTrial;
+                    document.getElementById('ingresosMensuales').textContent = 
+                        `$${(pagando * 15000).toLocaleString('es-CL')}`;
+                }
+            } catch (error) {
+                console.error('Error cargando métricas:', error);
+            }
         }
-        
-        async function cargarDatosDashboard() {
+
+        async function cargarBarberias() {
             try {
-                console.log('Cargando datos del dashboard...');
-                
-                // Cargar todas las barberías
                 const { data: barberias, error } = await supabase
                     .from('barberias')
                     .select('*')
                     .order('created_at', { ascending: false });
-                
+
                 if (error) throw error;
-                
-                todasLasBarberias = barberias || [];
-                
-                // Calcular métricas
-                const totalBarberias = todasLasBarberias.length;
-                const barberias_activas = todasLasBarberias.filter(b => b.activa).length;
-                const barberias_trial = todasLasBarberias.filter(b => b.plan === 'trial' && b.activa).length;
-                const barberias_pagadas = todasLasBarberias.filter(b => b.plan === 'pagado' && b.activa).length;
-                
-                // Calcular alertas
-                const alertas = [];
-                const hoy = new Date(getFechaChile());
-                
-                todasLasBarberias.forEach(barberia => {
-                    if (barberia.plan === 'trial' && barberia.activa) {
-                        const diasRestantes = calcularDiasRestantes(barberia.trial_hasta);
-                        if (diasRestantes <= 3) {
-                            alertas.push({
-                                tipo: 'trial_venciendo',
-                                barberia: barberia.nombre,
-                                dias: diasRestantes,
-                                mensaje: `${barberia.nombre} - Trial vence en ${diasRestantes} dias`
-                            });
-                        }
-                    } else if (barberia.plan === 'trial' && !barberia.activa) {
-                        alertas.push({
-                            tipo: 'trial_expirado',
-                            barberia: barberia.nombre,
-                            mensaje: `${barberia.nombre} - Trial expirado`
-                        });
-                    }
-                });
-                
-                // Actualizar métricas en UI
-                document.getElementById('totalBarberias').textContent = totalBarberias;
-                document.getElementById('estadoBarberias').textContent = 
-                    `${barberias_activas} activas - ${barberias_trial} trial - ${barberias_pagadas} pagadas`;
-                
-                const ingresosMensuales = barberias_pagadas * 15000;
-                document.getElementById('ingresosProyectados').textContent = 
-                    `${ingresosMensuales.toLocaleString('es-CL')}`;
-                document.getElementById('detailIngresos').textContent = 
-                    `${barberias_pagadas} barberias pagando`;
-                
-                document.getElementById('totalAlertas').textContent = alertas.length;
-                document.getElementById('detalleAlertas').textContent = 
-                    alertas.length > 0 ? 'Requieren atencion' : 'Todo OK';
-                
-                // Mostrar alertas rápidas
-                mostrarAlertasRapidas(alertas);
-                
-                // Actualizar métricas móviles
-                setTimeout(() => updateMobileMetrics(), 100);
-                
-            } catch (error) {
-                console.error('Error cargando dashboard:', error);
-                document.getElementById('alertasRapidas').innerHTML = 
-                    '<div class="text-red-600 text-center">Error cargando datos del dashboard</div>';
-            }
-        }
-        
-        function mostrarAlertasRapidas(alertas) {
-            const container = document.getElementById('alertasRapidas');
-            
-            if (alertas.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8">
-                        <div class="text-6xl mb-4">✓</div>
-                        <h3 class="text-xl font-semibold text-green-600 mb-2">Todo bajo control!</h3>
-                        <p class="text-gray-600">No hay barberias que requieran atencion inmediata</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '<div class="space-y-4">';
-            
-            alertas.forEach(alerta => {
-                const color = alerta.tipo === 'trial_venciendo' ? 'yellow' : 'red';
-                const icon = alerta.tipo === 'trial_venciendo' ? 'clock' : 'times-circle';
-                
-                html += `
-                    <div class="bg-${color}-50 border-l-4 border-${color}-400 p-4 rounded">
-                        <div class="flex items-center">
-                            <i class="fas fa-${icon} text-${color}-600 mr-3"></i>
-                            <div class="flex-1">
-                                <p class="font-medium text-${color}-800">${alerta.mensaje}</p>
-                            </div>
-                            <div class="space-x-2">
-                                <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="gestionarBarberia('${alerta.barberia}')">
-                                    Gestionar
+
+                const tbody = document.getElementById('tablaBarberias');
+                tbody.innerHTML = '';
+
+                for (const barberia of barberias) {
+                    // Contar usuarios de cada barbería
+                    const { count } = await supabase
+                        .from('usuarios')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('barberia_id', barberia.id);
+
+                    const estadoBadge = barberia.activa 
+                        ? '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Activa</span>'
+                        : '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Inactiva</span>';
+
+                    const planBadge = barberia.plan === 'trial'
+                        ? '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Trial</span>'
+                        : '<span class="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">Premium</span>';
+
+                    const trialHasta = barberia.trial_hasta 
+                        ? new Date(barberia.trial_hasta).toLocaleDateString('es-CL')
+                        : 'N/A';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${barberia.nombre}</div>
+                                <div class="text-xs text-gray-500">${barberia.id.substring(0, 8)}...</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">${planBadge}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${estadoBadge}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">${trialHasta}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">${count || 0} usuarios</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <button onclick="toggleBarberia('${barberia.id}', ${barberia.activa})" 
+                                    class="mr-2 px-3 py-1 ${barberia.activa ? 'bg-red-500' : 'bg-green-500'} text-white rounded hover:opacity-80">
+                                    ${barberia.activa ? 'Desactivar' : 'Activar'}
                                 </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            container.innerHTML = html;
-        }
-        
-        // ===============================
-        // GESTIÓN DE BARBERÍAS
-        // ===============================
-        async function loadGestionBarberias() {
-            document.getElementById('contentArea').innerHTML = `
-                <div class="space-y-4 md:space-y-6">
-                    <!-- Header con acciones -->
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <h2 class="text-xl md:text-2xl font-bold">Gestion de Barberias</h2>
-                        <button class="btn-mobile-primary w-full sm:w-auto" onclick="mostrarModalNuevaBarberia()">
-                            <i class="fas fa-plus mr-2"></i>Nueva Barberia
-                        </button>
-                    </div>
-                    
-                    <!-- Lista de Barberías -->
-                    <div id="listaBarberias">
-                        <div class="text-center py-8">
-                            <div class="loading-spinner mx-auto"></div>
-                            <p class="mt-4 text-gray-600 text-mobile-base">Cargando barberias...</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Cargar lista de barberías
-            await cargarListaBarberias();
-        }
-        
-        async function cargarListaBarberias() {
-            try {
-                console.log('Cargando lista de barberias...');
-                
-                // Mostrar loading
-                document.getElementById('listaBarberias').innerHTML = `
-                    <div class="text-center py-8">
-                        <div class="loading-spinner mx-auto"></div>
-                        <p class="mt-4 text-gray-600">Cargando barberias...</p>
-                    </div>
-                `;
-                
-                const { data: barberias, error } = await supabase
-                    .from('barberias')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
-                todasLasBarberias = barberias || [];
-                mostrarListaBarberias(todasLasBarberias);
-                
-            } catch (error) {
-                console.error('Error cargando barberias:', error);
-                document.getElementById('listaBarberias').innerHTML = 
-                    '<div class="text-red-600 text-center">Error cargando barberias</div>';
-            }
-        }
-        
-        function mostrarListaBarberias(barberias) {
-            const container = document.getElementById('listaBarberias');
-            
-            if (!barberias || barberias.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12">
-                        <div class="text-6xl mb-4">🏢</div>
-                        <h3 class="text-xl font-semibold text-gray-700 mb-2">No hay barberias registradas</h3>
-                        <p class="text-gray-600 mb-4 text-mobile-base">Crea tu primera barberia para comenzar</p>
-                        <button class="btn-mobile-primary" onclick="mostrarModalNuevaBarberia()">
-                            <i class="fas fa-plus mr-2"></i>Nueva Barberia
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '<div class="space-y-4">';
-            
-            barberias.forEach(barberia => {
-                const diasRestantes = calcularDiasRestantes(barberia.trial_hasta);
-                let estadoClass = 'estado-pagado';
-                let estadoBadge = '';
-                let estadoTexto = '';
-                let acciones = '';
-                
-                if (barberia.plan === 'pagado' && barberia.activa) {
-                    estadoClass = 'estado-pagado';
-                    estadoBadge = '<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-mobile-sm font-medium">PAGADO</span>';
-                    estadoTexto = 'Renovacion pendiente';
-                    acciones = `
-                        <div class="flex flex-wrap gap-2">
-                            <button class="btn-mobile-secondary flex-1 min-w-0" onclick="verEstadisticas('${barberia.id}')">
-                                Stats
-                            </button>
-                            <button class="btn-mobile-secondary flex-1 min-w-0" onclick="gestionarBarberia('${barberia.id}')">
-                                Gestionar
-                            </button>
-                        </div>
-                    `;
-                } else if (barberia.plan === 'trial' && barberia.activa && diasRestantes > 0) {
-                    estadoClass = 'estado-trial';
-                    estadoBadge = '<span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-mobile-sm font-medium">TRIAL</span>';
-                    estadoTexto = `Vence en ${diasRestantes} dias`;
-                    acciones = `
-                        <div class="flex flex-wrap gap-2">
-                            <button class="bg-green-600 text-white px-3 py-2 rounded text-mobile-sm hover:bg-green-700 btn-mobile flex-1" onclick="activarPago('${barberia.id}')">
-                                Activar Pago
-                            </button>
-                            <button class="bg-yellow-600 text-white px-3 py-2 rounded text-mobile-sm hover:bg-yellow-700 btn-mobile flex-1" onclick="extenderTrial('${barberia.id}')">
-                                Extender
-                            </button>
-                        </div>
-                        <button class="btn-mobile-secondary w-full mt-2" onclick="gestionarBarberia('${barberia.id}')">
-                            Mas Opciones
-                        </button>
-                    `;
-                } else {
-                    estadoClass = 'estado-expirado';
-                    estadoBadge = '<span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-mobile-sm font-medium">EXPIRADO</span>';
-                    estadoTexto = barberia.activa ? `Vencio hace ${Math.abs(diasRestantes)} dias` : 'Inactiva';
-                    acciones = `
-                        <div class="flex flex-wrap gap-2">
-                            <button class="bg-green-600 text-white px-3 py-2 rounded text-mobile-sm hover:bg-green-700 btn-mobile flex-1" onclick="reactivarBarberia('${barberia.id}')">
-                                Reactivar
-                            </button>
-                            <button class="bg-blue-600 text-white px-3 py-2 rounded text-mobile-sm hover:bg-blue-700 btn-mobile flex-1" onclick="contactarBarberia('${barberia.id}')">
-                                Contactar
-                            </button>
-                        </div>
-                        <button class="bg-red-600 text-white px-3 py-2 rounded text-mobile-sm hover:bg-red-700 btn-mobile w-full mt-2" onclick="eliminarBarberia('${barberia.id}')">
-                            Eliminar Definitivamente
-                        </button>
+                                <button onclick="extenderTrial('${barberia.id}')" 
+                                    class="px-3 py-1 bg-blue-500 text-white rounded hover:opacity-80">
+                                    +15 días
+                                </button>
+                            </td>
+                        </tr>
                     `;
                 }
-                
-                const fechaCreacion = new Date(barberia.created_at).toLocaleDateString('es-CL');
-                
-                html += `
-                    <div class="bg-white rounded-lg shadow ${estadoClass} card-mobile swipe-actions">
-                        <div class="swipe-content p-mobile">
-                            <div class="flex justify-between items-start mb-4">
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-3 mb-2 flex-wrap">
-                                        <h3 class="text-mobile-lg font-bold text-gray-800 truncate">${barberia.nombre}</h3>
-                                        ${estadoBadge}
-                                    </div>
-                                    <p class="text-gray-600 mb-2 text-mobile-base">${estadoTexto}</p>
-                                    <p class="text-mobile-sm text-gray-500">Creada: ${fechaCreacion}</p>
-                                </div>
-                            </div>
-                            <div class="border-t pt-4">
-                                ${acciones}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += '</div>';
-            container.innerHTML = html;
-        }
-        
-        // ===============================
-        // MODAL NUEVA BARBERÍA (SIN USUARIO)
-        // ===============================
-        function mostrarModalNuevaBarberia() {
-            const modalHTML = `
-                <div id="modalNuevaBarberia" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold">Nueva Barberia</h3>
-                            <button onclick="cerrarModalNuevaBarberia()" class="text-gray-500 hover:text-gray-700">
-                                <i class="fas fa-times text-xl"></i>
-                            </button>
-                        </div>
-                        
-                        <form id="formNuevaBarberia">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Barberia *</label>
-                                    <input type="text" id="nombreBarberia" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Ej: Barberia Central" required>
-                                </div>
-                                
-                                <div class="border-t pt-4">
-                                    <h4 class="text-base font-semibold text-gray-800 mb-3">Datos del Administrador</h4>
-                                    
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Admin *</label>
-                                            <input type="text" id="nombreAdmin" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Ej: Carlos Perez" required>
-                                        </div>
-                                        
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Email del Admin *</label>
-                                            <input type="email" id="emailAdmin" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="admin@barberia.com" required>
-                                        </div>
-                                        
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
-                                            <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50" value="123456" readonly>
-                                            <p class="text-xs text-gray-500 mt-1">Contraseña fija del sistema</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Plan Inicial *</label>
-                                    <select id="planInicial" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
-                                        <option value="trial">Trial (15 dias gratis)</option>
-                                        <option value="pagado">Pagado (inmediato)</option>
-                                    </select>
-                                </div>
-                                
-                                <div id="diasTrial">
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Dias de Trial</label>
-                                    <input type="number" id="diasTrialInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg" value="15" min="1" max="90">
-                                </div>
-                            </div>
-                            
-                            <div class="flex space-x-3 mt-6">
-                                <button type="button" onclick="cerrarModalNuevaBarberia()" class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
-                                    Cancelar
-                                </button>
-                                <button type="submit" class="flex-1 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">
-                                    Crear Barberia
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            // Event listeners
-            document.getElementById('planInicial').addEventListener('change', function() {
-                const diasTrialDiv = document.getElementById('diasTrial');
-                diasTrialDiv.style.display = this.value === 'trial' ? 'block' : 'none';
-            });
-            
-            document.getElementById('formNuevaBarberia').addEventListener('submit', procesarNuevaBarberia);
-        }
-        
-        function cerrarModalNuevaBarberia() {
-            const modal = document.getElementById('modalNuevaBarberia');
-            if (modal) modal.remove();
-        }
-        
-        async function procesarNuevaBarberia(e) {
-            e.preventDefault();
-            
-            const nombre = document.getElementById('nombreBarberia').value.trim();
-            const nombreAdmin = document.getElementById('nombreAdmin').value.trim();
-            const emailAdmin = document.getElementById('emailAdmin').value.trim();
-            const plan = document.getElementById('planInicial').value;
-            const diasTrial = parseInt(document.getElementById('diasTrialInput').value) || 15;
-            
-            // Validaciones
-            if (!nombre || !nombreAdmin || !emailAdmin) {
-                alert('Por favor completa todos los campos obligatorios');
-                return;
+            } catch (error) {
+                console.error('Error:', error);
             }
-            
-            if (!emailAdmin.includes('@')) {
-                alert('Por favor ingresa un email valido para el administrador');
-                return;
-            }
-            
-            try {
-                showLoading();
-                
-                // SOLO CREAR LA BARBERÍA
-                let trialHasta = null;
-                if (plan === 'trial') {
-                    const fecha = new Date(getFechaChile());
-                    fecha.setDate(fecha.getDate() + diasTrial);
-                    trialHasta = fecha.toISOString().split('T')[0];
-                }
-                
-                const nuevaBarberia = {
-                    nombre: nombre,
-                    activa: true,
-                    plan: plan,
-                    trial_hasta: trialHasta
-                };
-                
-                console.log('Creando barberia:', nuevaBarberia);
-                
-                const { data: barberiaData, error: barberiaError } = await supabase
-                    .from('barberias')
-                    .insert([nuevaBarberia])
-                    .select();
-                
-                if (barberiaError) throw barberiaError;
-                
-                const barberiaId = barberiaData[0].id;
-                console.log('Barberia creada con ID:', barberiaId);
-                
-                // Mensaje con instrucciones para crear usuario manual
-                const mensaje = `Barberia "${nombre}" creada exitosamente!
+        }
 
-PROXIMO PASO MANUAL:
-Debes crear el usuario administrador en Supabase:
+        async function toggleBarberia(id, estadoActual) {
+            const nuevoEstado = !estadoActual;
+            const accion = nuevoEstado ? 'activar' : 'desactivar';
+            
+            if (!confirm(`¿Seguro que quieres ${accion} esta barbería?`)) return;
 
-Email: ${emailAdmin}
-Nombre: ${nombreAdmin}
-Role: admin
-Barberia ID: ${barberiaId}
-Activo: true
-Contraseña: 123456
-
-DETALLES:
-Plan: ${plan === 'trial' ? `Trial por ${diasTrial} dias` : 'Plan pagado activo'}`;
-
-                alert(mensaje);
-                
-                cerrarModalNuevaBarberia();
-                await cargarListaBarberias();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert(`Error al crear barberia: ${error.message}`);
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        // ===============================
-        // ACCIONES DE GESTIÓN
-        // ===============================
-        async function activarPago(barberiaId) {
-            if (!confirm('Marcar esta barberia como PAGADA?')) return;
-            
             try {
-                showLoading();
-                
-                const { error } = await supabase
-                    .from('barberias')
-                    .update({ 
-                        plan: 'pagado',
-                        activa: true
-                    })
-                    .eq('id', barberiaId);
-                
-                if (error) throw error;
-                
-                alert('Barberia marcada como PAGADA exitosamente');
-                await cargarListaBarberias();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al activar pago: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        async function extenderTrial(barberiaId) {
-            const dias = prompt('Cuantos dias extender el trial?', '7');
-            if (!dias || isNaN(dias)) return;
-            
-            try {
-                showLoading();
-                
-                // Obtener fecha actual del trial
-                const { data: barberia, error: errorGet } = await supabase
-                    .from('barberias')
-                    .select('trial_hasta')
-                    .eq('id', barberiaId)
-                    .single();
-                
-                if (errorGet) throw errorGet;
-                
-                // Calcular nueva fecha
-                const fechaActual = new Date(barberia.trial_hasta || getFechaChile());
-                fechaActual.setDate(fechaActual.getDate() + parseInt(dias));
-                const nuevaFecha = fechaActual.toISOString().split('T')[0];
-                
-                const { error } = await supabase
-                    .from('barberias')
-                    .update({ 
-                        trial_hasta: nuevaFecha,
-                        activa: true
-                    })
-                    .eq('id', barberiaId);
-                
-                if (error) throw error;
-                
-                alert(`Trial extendido ${dias} dias exitosamente`);
-                await cargarListaBarberias();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al extender trial: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        async function reactivarBarberia(barberiaId) {
-            const dias = prompt('Cuantos dias de trial dar?', '15');
-            if (!dias || isNaN(dias)) return;
-            
-            try {
-                showLoading();
-                
-                const fechaHasta = new Date(getFechaChile());
-                fechaHasta.setDate(fechaHasta.getDate() + parseInt(dias));
-                const nuevaFecha = fechaHasta.toISOString().split('T')[0];
-                
-                const { error } = await supabase
-                    .from('barberias')
-                    .update({ 
-                        plan: 'trial',
-                        activa: true,
-                        trial_hasta: nuevaFecha
-                    })
-                    .eq('id', barberiaId);
-                
-                if (error) throw error;
-                
-                alert(`Barberia reactivada con ${dias} dias de trial`);
-                await cargarListaBarberias();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al reactivar: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        function contactarBarberia(barberiaId) {
-            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
-            if (!barberia) return;
-            
-            const mensaje = `Hola! Tu periodo de prueba de ${barberia.nombre} ha finalizado. Te gustaria continuar con el plan pagado? Contactame para mas informacion.`;
-            const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-            window.open(url, '_blank');
-        }
-        
-        async function eliminarBarberia(barberiaId) {
-            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
-            if (!barberia) return;
-            
-            if (!confirm(`ELIMINAR DEFINITIVAMENTE "${barberia.nombre}"?\n\nESTA ACCION NO SE PUEDE DESHACER\n\nSe eliminaran:\n- La barberia\n- Todos sus usuarios\n- Todos sus servicios\n- Todos sus datos`)) {
-                return;
-            }
-            
-            const confirmacion = prompt('Escribe "ELIMINAR" para confirmar:');
-            if (confirmacion !== 'ELIMINAR') {
-                alert('Eliminacion cancelada');
-                return;
-            }
-            
-            try {
-                showLoading();
-                
-                const { error } = await supabase
-                    .from('barberias')
-                    .delete()
-                    .eq('id', barberiaId);
-                
-                if (error) throw error;
-                
-                alert(`Barberia "${barberia.nombre}" eliminada definitivamente`);
-                await cargarListaBarberias();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al eliminar: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-        
-        // ===============================
-        // FUNCIONES AUXILIARES
-        // ===============================
-        function verEstadisticas(barberiaId) {
-            alert('Funcionalidad en desarrollo - Mostrara estadisticas detalladas de la barberia seleccionada');
-        }
-        
-        function gestionarBarberia(barberiaId) {
-            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
-            if (!barberia) return;
-            
-            const opciones = [
-                'Activar Trial 15 dias',
-                'Extender Trial',
-                'Marcar como Pagado',
-                'Bloquear/Desbloquear',
-                'Contactar por WhatsApp',
-                'Eliminar Barberia'
-            ];
-            
-            const seleccion = prompt(`Gestion de: ${barberia.nombre}\n\nSelecciona una opcion:\n${opciones.map((op, i) => `${i + 1}. ${op}`).join('\n')}`);
-            
-            if (!seleccion) return;
-            
-            const opcion = parseInt(seleccion) - 1;
-            
-            switch(opcion) {
-                case 0: // Activar Trial
-                    reactivarBarberia(barberiaId);
-                    break;
-                case 1: // Extender Trial
-                    extenderTrial(barberiaId);
-                    break;
-                case 2: // Marcar como Pagado
-                    activarPago(barberiaId);
-                    break;
-                case 3: // Bloquear/Desbloquear
-                    toggleBarberia(barberiaId);
-                    break;
-                case 4: // Contactar
-                    contactarBarberia(barberiaId);
-                    break;
-                case 5: // Eliminar
-                    eliminarBarberia(barberiaId);
-                    break;
-                default:
-                    alert('Opcion no valida');
-            }
-        }
-        
-        async function toggleBarberia(barberiaId) {
-            const barberia = todasLasBarberias.find(b => b.id === barberiaId);
-            if (!barberia) return;
-            
-            const accion = barberia.activa ? 'BLOQUEAR' : 'DESBLOQUEAR';
-            const nuevoEstado = !barberia.activa;
-            
-            if (!confirm(`${accion} "${barberia.nombre}"?`)) return;
-            
-            try {
-                showLoading();
-                
-                const { error } = await supabase
+                // Actualizar barbería
+                const { error: errorBarberia } = await supabase
                     .from('barberias')
                     .update({ activa: nuevoEstado })
-                    .eq('id', barberiaId);
-                
-                if (error) throw error;
-                
-                alert(`Barberia ${accion === 'BLOQUEAR' ? 'bloqueada' : 'desbloqueada'} exitosamente`);
-                await cargarListaBarberias();
-                
+                    .eq('id', id);
+
+                // Actualizar usuarios
+                const { error: errorUsuarios } = await supabase
+                    .from('usuarios')
+                    .update({ activo: nuevoEstado })
+                    .eq('barberia_id', id);
+
+                if (!errorBarberia && !errorUsuarios) {
+                    alert(`✅ Barbería ${accion}da correctamente`);
+                    cargarBarberias();
+                    cargarMetricas();
+                }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error al cambiar estado: ' + error.message);
-            } finally {
-                hideLoading();
+                alert('❌ Error: ' + error.message);
             }
         }
-        
-        function loadMetricas() {
-            document.getElementById('contentArea').innerHTML = `
-                <div class="space-y-6">
-                    <h2 class="text-2xl font-bold">Metricas Globales</h2>
-                    
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-lg font-semibold mb-4">Analisis del Negocio SaaS</h3>
-                        <div class="text-center py-12">
-                            <div class="text-6xl mb-4">📈</div>
-                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Metricas Avanzadas</h3>
-                            <p class="text-gray-600">Esta funcionalidad estara disponible proximamente</p>
-                            <p class="text-sm text-gray-500 mt-2">Incluira: Analisis de retencion, LTV, churn rate, etc.</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+
+        async function extenderTrial(id) {
+            if (!confirm('¿Extender trial por 15 días más?')) return;
+
+            try {
+                const nuevaFecha = new Date();
+                nuevaFecha.setDate(nuevaFecha.getDate() + 15);
+
+                const { error } = await supabase
+                    .from('barberias')
+                    .update({ 
+                        trial_hasta: nuevaFecha.toISOString().split('T')[0],
+                        plan: 'trial',
+                        activa: true
+                    })
+                    .eq('id', id);
+
+                if (!error) {
+                    alert('✅ Trial extendido por 15 días');
+                    cargarBarberias();
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
         }
-        
-        function loadFacturacion() {
-            document.getElementById('contentArea').innerHTML = `
-                <div class="space-y-6">
-                    <h2 class="text-2xl font-bold">Control de Facturacion</h2>
-                    
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-lg font-semibold mb-4">Gestion de Pagos</h3>
-                        <div class="text-center py-12">
-                            <div class="text-6xl mb-4">💰</div>
-                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Sistema de Facturacion</h3>
-                            <p class="text-gray-600">Esta funcionalidad estara disponible proximamente</p>
-                            <p class="text-sm text-gray-500 mt-2">Incluira: Historial de pagos, facturas automaticas, recordatorios</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+
+        function mostrarModalNuevaBarberia() {
+            document.getElementById('modalNuevaBarberia').classList.remove('hidden');
         }
-        
-        // ===============================
-        // LOGOUT
-        // ===============================
-        function logout() {
-            currentCreador = null;
-            location.reload();
+
+        function cerrarModal() {
+            document.getElementById('modalNuevaBarberia').classList.add('hidden');
+            document.getElementById('formNuevaBarberia').reset();
         }
+
+        document.getElementById('formNuevaBarberia').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nombre = document.getElementById('nombreBarberia').value;
+            const emailAdmin = document.getElementById('emailAdmin').value;
+            const nombreAdmin = document.getElementById('nombreAdmin').value;
+            const diasTrial = document.getElementById('diasTrial').value;
+
+            try {
+                // Crear barbería
+                const trialHasta = new Date();
+                trialHasta.setDate(trialHasta.getDate() + parseInt(diasTrial));
+
+                const { data: nuevaBarberia, error: errorBarberia } = await supabase
+                    .from('barberias')
+                    .insert({
+                        nombre: nombre,
+                        plan: 'trial',
+                        trial_hasta: trialHasta.toISOString().split('T')[0],
+                        activa: true
+                    })
+                    .select()
+                    .single();
+
+                if (errorBarberia) throw errorBarberia;
+
+                // Crear usuario admin
+                const { error: errorUsuario } = await supabase
+                    .from('usuarios')
+                    .insert({
+                        email: emailAdmin,
+                        nombre: nombreAdmin,
+                        role: 'admin',
+                        barberia_id: nuevaBarberia.id,
+                        activo: true
+                    });
+
+                if (errorUsuario) throw errorUsuario;
+
+                alert(`✅ Barbería creada exitosamente!\n\nCredenciales:\n📧 ${emailAdmin}\n🔑 123456`);
+                cerrarModal();
+                cargarBarberias();
+                cargarMetricas();
+
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        });
     </script>
 </body>
 </html>
