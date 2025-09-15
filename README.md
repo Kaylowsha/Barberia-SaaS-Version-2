@@ -1,2 +1,2 @@
-# Barberia-SaaS-Version-2
-duplicado de original para mejoras
+# barberia-saas
+Sistema de gestión para barberías
