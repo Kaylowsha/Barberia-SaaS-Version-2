@@ -207,12 +207,29 @@ function parseFechaChile(fechaString) {
         // LOGIN DINÁMICO - Consultas separadas para evitar RLS
         console.log('🔍 Buscando usuario:', email);
         
-        const { data: usuarios, error } = await supabase
-            .from('usuarios')
-            .select('*')
-            .eq('email', email)
-            .eq('activo', true)
-            .single();
+       // Buscar usuario por email (sin filtrar por activo todavía)
+const { data: usuarios, error } = await supabase
+    .from('usuarios')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+if (error || !usuarios) {
+    console.error('❌ Usuario no encontrado:', error);
+    showError('Usuario no encontrado.');
+    hideLoading();
+    return;
+}
+
+// AHORA verificar si está activo
+if (!usuarios.activo) {
+    console.log('⚠️ Usuario inactivo:', usuarios.nombre);
+    showError('Tu cuenta está inactiva. Contacta al administrador.');
+    hideLoading();
+    return;
+}
+
+console.log('✅ Usuario encontrado:', usuarios.nombre);
 
         if (error || !usuarios) {
             console.error('❌ Usuario no encontrado:', error);
@@ -232,12 +249,32 @@ function parseFechaChile(fechaString) {
             .eq('id', usuarios.barberia_id)
             .single();
 
-        if (errorBarberia || !barberia || !barberia.activa) {
-            console.error('❌ Barbería no encontrada:', errorBarberia);
-            showError('Barbería inactiva o no encontrada. Contacta al administrador.');
-            hideLoading();
-            return;
+       if (errorBarberia || !barberia) {
+    console.error('❌ Barbería no encontrada:', errorBarberia);
+    showError('Error del sistema. Contacta soporte.');
+    hideLoading();
+    return;
+}
+
+// Verificar si la barbería está activa
+if (!barberia.activa) {
+    console.log('⚠️ Barbería inactiva:', barberia.nombre);
+    
+    // Verificar si es por trial vencido
+    if (barberia.plan === 'trial' && barberia.trial_hasta) {
+        const hoy = new Date();
+        const trialHasta = new Date(barberia.trial_hasta);
+        if (hoy > trialHasta) {
+            showError('Tu período de prueba ha terminado. Contacta al administrador para activar tu cuenta.');
+        } else {
+            showError('Tu barbería está temporalmente inactiva. Contacta al administrador.');
         }
+    } else {
+        showError('Tu barbería está inactiva. Contacta al administrador para reactivarla.');
+    }
+    hideLoading();
+    return;
+}
         
         console.log('✅ Barbería encontrada:', barberia.nombre);
 
