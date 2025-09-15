@@ -4,9 +4,9 @@
 
 // IMPORTANTE: Reemplaza estos valores con los tuyos de Supabase
 const SUPABASE_CONFIG = {
-    url: 'https://tlireovgyvnsomovncji.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsaXJlb3ZneXZuc29tb3ZuY2ppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MDYzODksImV4cCI6MjA3MzE4MjM4OX0.7d4WaX-bxlAFJCLS6cPhCOFONsSZxX7Oc0153Dpjrl0',
-    barberiaId: '79da96ae-4357-4ede-8c98-9a61c1c3378e' // ID de NATWIN 
+    url: 'https://uzmdreqbcacwkkfwpkui.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6bWRyZXFiY2Fjd2trZndwa3VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDU1MTMsImV4cCI6MjA3MzQ4MTUxM30.wSWo1uebanmw9rwzJGNGlzkgNBFggXHvEF4dj1uEm58',
+    barberiaId: 'window.CURRENT_BARBERIA_ID' // ID de NATWIN 
 };
 
 // Usuarios de prueba (temporal mientras no tengamos auth real)
@@ -16,14 +16,14 @@ const TEST_USERS = {
         email: 'israelparancan.n@gmail.com',
         nombre: 'Administrador',
         role: 'admin',
-        barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e'
+        barberia_id: 'window.CURRENT_BARBERIA_ID'
     },
     empleado: {
         id: '1a0242b8-bc7a-4e61-9e33-ac182996a950',
         email: 'ispn4trade@gmail.com',
         nombre: 'Misho',
         role: 'empleado',
-        barberia_id: '79da96ae-4357-4ede-8c98-9a61c1c3378e'
+        barberia_id: 'window.CURRENT_BARBERIA_ID'
     }
 };
 
