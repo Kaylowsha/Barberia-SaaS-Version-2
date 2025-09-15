@@ -18,8 +18,8 @@
                     <h1 class="text-2xl font-bold">
                         <i class="fas fa-crown mr-2"></i>Panel del Creador
                     </h1>
-              <button onclick="location.href='index.html'" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">
-    <i class="fas fa-arrow-left mr-2"></i>Volver al Sistema
+<button onclick="alert('Ya estás en el Panel del Creador')" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+    <i class="fas fa-sign-out-alt mr-2"></i>Salir
 </button>
                 </div>
             </div>
@@ -53,6 +53,13 @@
 
     <!-- Contenido de Dashboard -->
     <div id="content-dashboard" class="tab-content">
+        <!-- Botón para ir al Sistema de Barbería -->
+<div class="mb-6 text-center">
+    <button onclick="window.open('index.html', '_blank')" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+        <i class="fas fa-store mr-2"></i>Ir a Sistema Barbería
+    </button>
+    <p class="text-sm text-gray-600 mt-2">Abre el sistema de barbería en una nueva pestaña para probar</p>
+</div>
         <!-- Métricas Generales -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <div class="bg-white p-6 rounded-lg shadow">
