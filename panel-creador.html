@@ -18,11 +18,9 @@
                     <h1 class="text-2xl font-bold">
                         <i class="fas fa-crown mr-2"></i>Panel del Creador
                     </h1>
-                   <button onclick="if(confirm('¿Salir del Panel del Creador?')) location.href='index.html'" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
-    <i class="fas fa-sign-out-alt mr-2"></i>Salir
+              <button onclick="location.href='index.html'" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">
+    <i class="fas fa-arrow-left mr-2"></i>Volver al Sistema
 </button>
-                        <i class="fas fa-arrow-left mr-2"></i>Salir
-                    </button>
                 </div>
             </div>
         </nav>
@@ -239,21 +237,9 @@
         // Configuración Supabase
         const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
 
-        // Cargar datos al iniciar
-window.addEventListener('load', () => {
-    // Verificar autenticación
-    if (localStorage.getItem('creadorAutenticado') !== 'true') {
-        window.location.href = 'login-creador.html';
-        return;
-    }
-    mostrarTab('dashboard');
-});
 
-// Función para cerrar sesión
-function cerrarSesionCreador() {
-    localStorage.removeItem('creadorAutenticado');
-    window.location.href = 'login-creador.html';
-}
+
+
 
         async function cargarMetricas() {
             try {
@@ -549,13 +535,8 @@ async function convertirAPremium(barberiaId) {
     // Aquí puedes agregar gráficos y reportes más complejos después
     console.log('Cargando reportes...');
 }
-        // Cargar datos al iniciar
+      // Cargar datos al iniciar
 window.addEventListener('load', () => {
-    // Verificar autenticación
-    if (localStorage.getItem('creadorAutenticado') !== 'true') {
-        window.location.href = 'login-creador.html';
-        return;
-    }
     mostrarTab('dashboard');
 });
 
