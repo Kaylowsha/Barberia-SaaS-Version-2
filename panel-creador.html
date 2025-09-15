@@ -549,6 +549,21 @@ async function convertirAPremium(barberiaId) {
     // Aquí puedes agregar gráficos y reportes más complejos después
     console.log('Cargando reportes...');
 }
+        // Cargar datos al iniciar
+window.addEventListener('load', () => {
+    // Verificar autenticación
+    if (localStorage.getItem('creadorAutenticado') !== 'true') {
+        window.location.href = 'login-creador.html';
+        return;
+    }
+    mostrarTab('dashboard');
+});
+
+// Función para cerrar sesión
+function cerrarSesionCreador() {
+    localStorage.removeItem('creadorAutenticado');
+    window.location.href = 'login-creador.html';
+}
         // Función para cambiar entre tabs
         function mostrarTab(tabId) {
             // Ocultar todos los contenidos
