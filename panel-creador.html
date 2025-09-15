@@ -160,31 +160,44 @@
     </div>
 </div>
     <!-- Contenido de Reportes -->
-    <div id="content-reportes" class="tab-content hidden">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">📈 Reportes y Análisis</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
-                    <h3 class="font-bold mb-2">📊 Reporte de Crecimiento</h3>
-                    <p class="text-gray-600 text-sm">Ver evolución de barberías registradas</p>
-                </div>
-                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
-                    <h3 class="font-bold mb-2">💰 Reporte Financiero</h3>
-                    <p class="text-gray-600 text-sm">Ingresos, proyecciones y métricas</p>
-                </div>
-                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
-                    <h3 class="font-bold mb-2">📋 Reporte de Uso</h3>
-                    <p class="text-gray-600 text-sm">Actividad por barbería</p>
-                </div>
-                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
-                    <h3 class="font-bold mb-2">⏰ Trials por Vencer</h3>
-                    <p class="text-gray-600 text-sm">Barberías próximas a pagar</p>
-                </div>
-            </div>
+<div id="content-reportes" class="tab-content hidden">
+    <!-- Resumen rápido -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-4 rounded-lg shadow">
+            <div class="text-sm text-gray-600">Servicios Totales</div>
+            <div class="text-2xl font-bold text-blue-600" id="serviciosTotales">0</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <div class="text-sm text-gray-600">Usuarios Activos</div>
+            <div class="text-2xl font-bold text-green-600" id="usuariosActivos">0</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <div class="text-sm text-gray-600">Tasa Conversión</div>
+            <div class="text-2xl font-bold text-purple-600" id="tasaConversion">0%</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <div class="text-sm text-gray-600">Promedio x Barbería</div>
+            <div class="text-2xl font-bold text-orange-600" id="promedioPorBarberia">$0</div>
+        </div>
+    </div>
+
+    <!-- Reporte de Trials por Vencer -->
+    <div class="bg-white p-6 rounded-lg shadow mb-6">
+        <h3 class="text-lg font-bold mb-4">⏰ Trials Próximos a Vencer (próximos 15 días)</h3>
+        <div id="trialsVenciendo" class="space-y-2">
+            <!-- Se llenará dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Top Barberías por Actividad -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-bold mb-4">🏆 Top 5 Barberías por Actividad</h3>
+        <div id="topBarberias" class="space-y-2">
+            <!-- Se llenará dinámicamente -->
         </div>
     </div>
 </div>
+
     <!-- Modal Nueva Barbería -->
     <div id="modalNuevaBarberia" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
