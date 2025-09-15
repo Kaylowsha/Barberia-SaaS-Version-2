@@ -18,8 +18,10 @@
                     <h1 class="text-2xl font-bold">
                         <i class="fas fa-crown mr-2"></i>Panel del Creador
                     </h1>
-                    <button onclick="location.href='index.html'" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100">
-                        <i class="fas fa-arrow-left mr-2"></i>Volver al Sistema
+                   <button onclick="if(confirm('¿Salir del Panel del Creador?')) location.href='index.html'" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+    <i class="fas fa-sign-out-alt mr-2"></i>Salir
+</button>
+                        <i class="fas fa-arrow-left mr-2"></i>Salir
                     </button>
                 </div>
             </div>
