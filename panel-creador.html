@@ -241,8 +241,19 @@
 
         // Cargar datos al iniciar
 window.addEventListener('load', () => {
+    // Verificar autenticación
+    if (localStorage.getItem('creadorAutenticado') !== 'true') {
+        window.location.href = 'login-creador.html';
+        return;
+    }
     mostrarTab('dashboard');
 });
+
+// Función para cerrar sesión
+function cerrarSesionCreador() {
+    localStorage.removeItem('creadorAutenticado');
+    window.location.href = 'login-creador.html';
+}
 
         async function cargarMetricas() {
             try {
