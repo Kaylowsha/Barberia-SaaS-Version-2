@@ -204,19 +204,10 @@ function parseFechaChile(fechaString) {
             hideError();
             
             try {
-// LOGIN DINÁMICO - Consultar usuario Y su barbería
+// LOGIN DINÁMICO - Consultas separadas para evitar RLS
 const { data: usuarios, error } = await supabase
     .from('usuarios')
-    .select(`
-        *,
-        barberias (
-            id,
-            nombre,
-            plan,
-            trial_hasta,
-            activa
-        )
-    `)
+    .select('*')
     .eq('email', email)
     .eq('activo', true)
     .single();
@@ -227,8 +218,14 @@ if (error || !usuarios) {
     return;
 }
 
-// Validar que la barbería existe y está activa
-if (!usuarios.barberias || !usuarios.barberias.activa) {
+// Consultar barbería por separado
+const { data: barberia, error: errorBarberia } = await supabase
+    .from('barberias')
+    .select('id, nombre, plan, trial_hasta, activa')
+    .eq('id', usuarios.barberia_id)
+    .single();
+
+if (errorBarberia || !barberia || !barberia.activa) {
     showError('Barbería inactiva o no encontrada. Contacta al administrador.');
     hideLoading();
     return;
@@ -249,14 +246,18 @@ const userData = {
     role: usuarios.role,
     barberia_id: usuarios.barberia_id,
     barberias: {
-        id: usuarios.barberias.id,
-        nombre: usuarios.barberias.nombre,
-        plan: usuarios.barberias.plan,
-        trial_hasta: usuarios.barberias.trial_hasta,
-        activa: usuarios.barberias.activa
+        id: barberia.id,
+        nombre: barberia.nombre,
+        plan: barberia.plan,
+        trial_hasta: barberia.trial_hasta,
+        activa: barberia.activa
     }
 };
 
+// Crear variable global dinámica
+window.CURRENT_BARBERIA_DATA = barberia;
+window.CURRENT_BARBERIA_ID = barberia.id;
+                
 // Crear variable global dinámica
 window.CURRENT_BARBERIA_DATA = usuarios.barberias;
 window.CURRENT_BARBERIA_ID = usuarios.barberias.id;
