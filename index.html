@@ -204,16 +204,32 @@ function parseFechaChile(fechaString) {
             hideError();
             
             try {
-                // LOGIN DINÁMICO - Consultar Supabase
+// LOGIN DINÁMICO - Consultar usuario Y su barbería
 const { data: usuarios, error } = await supabase
     .from('usuarios')
-    .select('*')
+    .select(`
+        *,
+        barberias (
+            id,
+            nombre,
+            plan,
+            trial_hasta,
+            activa
+        )
+    `)
     .eq('email', email)
     .eq('activo', true)
     .single();
 
 if (error || !usuarios) {
     showError('Usuario no encontrado o inactivo.');
+    hideLoading();
+    return;
+}
+
+// Validar que la barbería existe y está activa
+if (!usuarios.barberias || !usuarios.barberias.activa) {
+    showError('Barbería inactiva o no encontrada. Contacta al administrador.');
     hideLoading();
     return;
 }
@@ -225,7 +241,7 @@ if (password !== '123456') {
     return;
 }
 
-// Login exitoso
+// Login exitoso - Datos dinámicos reales
 const userData = {
     id: usuarios.id,
     email: usuarios.email,
@@ -233,11 +249,17 @@ const userData = {
     role: usuarios.role,
     barberia_id: usuarios.barberia_id,
     barberias: {
-        id: usuarios.barberia_id,
-        nombre: 'NatWin', // Hardcodeado por ahora
-        plan: 'trial'
+        id: usuarios.barberias.id,
+        nombre: usuarios.barberias.nombre,
+        plan: usuarios.barberias.plan,
+        trial_hasta: usuarios.barberias.trial_hasta,
+        activa: usuarios.barberias.activa
     }
 };
+
+// Crear variable global dinámica
+window.CURRENT_BARBERIA_DATA = usuarios.barberias;
+window.CURRENT_BARBERIA_ID = usuarios.barberias.id;
                 
                 // Login exitoso
                 currentUser = userData;
@@ -287,7 +309,14 @@ const userData = {
             // Actualizar información del usuario
             document.getElementById('userName').textContent = currentUser.nombre;
             document.getElementById('userRole').textContent = userRole === 'admin' ? 'Administrador' : 'Empleado';
-            document.getElementById('barberiaName').textContent = currentBarberia ? currentBarberia.nombre : '';
+           // Actualizar información de barbería con datos reales
+const barberiaInfo = window.CURRENT_BARBERIA_DATA;
+if (barberiaInfo) {
+    document.getElementById('barberiaName').textContent = barberiaInfo.nombre;
+    console.log('✅ Barbería cargada:', barberiaInfo.nombre, 'Plan:', barberiaInfo.plan);
+} else {
+    document.getElementById('barberiaName').textContent = '';
+}
             
             // Verificar y mostrar alerta de trial si aplica
             checkTrialStatus();
@@ -299,14 +328,31 @@ const userData = {
             loadTab('registrar');
         }
         
-        async function checkTrialStatus() {
-            // Mostrar mensaje temporal
-            if (currentBarberia && currentBarberia.plan === 'trial') {
-                document.getElementById('trialAlert').classList.remove('hidden');
-                document.getElementById('trialMessage').textContent = 
-                    `Período de prueba activo. 15 días restantes.`;
-            }
-        }
+       async function checkTrialStatus() {
+    const barberiaData = window.CURRENT_BARBERIA_DATA;
+    if (barberiaData && barberiaData.plan === 'trial') {
+        document.getElementById('trialAlert').classList.remove('hidden');
+        
+        // Calcular días restantes reales
+        const diasRestantes = calcularDiasRestantes(barberiaData.trial_hasta);
+        const mensaje = diasRestantes > 0 
+            ? `Período de prueba activo. ${diasRestantes} días restantes.`
+            : 'Período de prueba EXPIRADO. Contacta al administrador.';
+            
+        document.getElementById('trialMessage').textContent = mensaje;
+        console.log('⏰ Trial status:', mensaje);
+    }
+}
+
+// Función auxiliar para calcular días restantes
+function calcularDiasRestantes(fechaHasta) {
+    if (!fechaHasta) return 0;
+    const hoy = new Date(getFechaChile());
+    const hasta = new Date(fechaHasta);
+    const diferencia = hasta.getTime() - hoy.getTime();
+    const dias = Math.ceil(diferencia / (1000 * 3600 * 24));
+    return Math.max(0, dias);
+}
         
         // ===============================
         // GENERACIÓN DE TABS
@@ -498,7 +544,7 @@ const userData = {
             
             try {
                    const nuevoServicio = {
-    barberia_id: SUPABASE_CONFIG.barberiaId,
+    barberia_id: window.CURRENT_BARBERIA_ID,
     realizado_por_id: currentUser.id,
     realizado_por_nombre: currentUser.nombre,
     servicio_principal_id: parseInt(servicioPrincipal.value),
@@ -654,7 +700,7 @@ const userData = {
         let query = supabase
             .from('citas')
             .select('*')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .gte('fecha', fechaInicio)
             .lte('fecha', fechaFin);
         
@@ -691,7 +737,7 @@ if (vista !== 'diaria') {
     let queryAdelantos = supabase
         .from('adelantos')
         .select('barbero_id, monto')
-        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+        .eq('barberia_id', window.CURRENT_BARBERIA_ID)
         .gte('created_at', fechaInicio + 'T00:00:00')
         .lte('created_at', fechaFin + 'T23:59:59');
     
@@ -853,7 +899,7 @@ console.log('📊 Mostrando todos los adelantos históricos del período');
         const { data: barberos, error } = await supabase
             .from('usuarios')
             .select('id, nombre')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .eq('activo', true);
         
         if (error) throw error;
@@ -955,7 +1001,7 @@ async function cargarBarberosEnFiltroServicios() {
         const { data: barberos, error } = await supabase
             .from('usuarios')
             .select('id, nombre')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .eq('activo', true);
         
         if (error) throw error;
@@ -1033,7 +1079,7 @@ console.log(`🔍 Cargando servicios: ${vista} | ${fechaInicio} al ${fechaFin}`)
         let query = supabase
             .from('citas')
             .select('*')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .gte('fecha', fechaInicio)
             .lte('fecha', fechaFin);
 
@@ -1179,7 +1225,7 @@ function mostrarListaServicios(servicios) {
 
 function filtrarPorCodigo() {
     const codigo = document.getElementById('buscarCodigo').value.replace('#', '').trim();
-    
+   
     if (!codigo) {
         mostrarListaServicios(serviciosGlobales);
         return;
@@ -1205,7 +1251,7 @@ async function confirmarEliminarServicio(servicioId, codigo) {
             .from('citas')
             .delete()
             .eq('id', servicioId)
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId);
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID);
         
         if (error) {
             console.error('❌ Error eliminando servicio:', error);
@@ -1492,7 +1538,7 @@ try {
     const { data: barberos, error } = await supabase
         .from('usuarios')
         .select('id, nombre, email, role')
-        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+        .eq('barberia_id', window.CURRENT_BARBERIA_ID)
         .eq('activo', true);
     
     if (error) {
@@ -1607,7 +1653,7 @@ async function confirmarEliminarBarbero(barberoId, nombre) {
             .from('usuarios')
             .update({ activo: false })
             .eq('id', barberoId)
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .select();
         
         if (error) {
@@ -1700,7 +1746,7 @@ async function cargarResumenAdelantos() {
         const { data: adelantos, error } = await supabase
             .from('adelantos')
             .select('barbero_nombre, monto')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .eq('activo', true)
             .gte('created_at', inicioSemana.toISOString())
             .lte('created_at', finSemana.toISOString());
@@ -1870,7 +1916,7 @@ async function cargarBarberosEnHistorial() {
         const { data: barberos, error } = await supabase
             .from('usuarios')
             .select('id, nombre')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId);
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID);
         
         if (error) throw error;
         
@@ -1910,7 +1956,7 @@ async function cargarHistorialAdelantos() {
         let query = supabase
             .from('adelantos')
             .select('*')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .gte('created_at', fechaDesde + 'T00:00:00')
             .lte('created_at', fechaHasta + 'T23:59:59')
             .order('created_at', { ascending: false });
@@ -2057,7 +2103,7 @@ function mostrarTablaHistorial(adelantos) {
         const { data: barberos, error } = await supabase
             .from('usuarios')
             .select('id, nombre')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .eq('activo', true);
         
         if (error) throw error;
@@ -2198,7 +2244,7 @@ function mostrarTablaHistorial(adelantos) {
                 let queryServicios = supabase
                     .from('citas')
                     .select('*')
-                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .eq('barberia_id', window.CURRENT_BARBERIA_ID)
                     .gte('fecha', fechaInicio)
                     .lte('fecha', fechaFin);
                 
@@ -2232,7 +2278,7 @@ if (vista !== 'diaria') {
     let queryAdelantos = supabase
         .from('adelantos')
         .select('barbero_id, monto')
-        .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+        .eq('barberia_id', window.CURRENT_BARBERIA_ID)
         .gte('created_at', fechaInicio + 'T00:00:00')
         .lte('created_at', fechaFin + 'T23:59:59');
     
@@ -2489,7 +2535,7 @@ if (vista !== 'diaria') {
                 const { data: servicios, error } = await supabase
                     .from('citas')
                     .select('*')
-                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                    .eq('barberia_id', window.CURRENT_BARBERIA_ID)
                     .gte('fecha', fechaInicio)
                     .lte('fecha', fechaFin);
                 
@@ -2613,7 +2659,7 @@ if (vista !== 'diaria') {
                 const { data: servicios, error } = await supabase
                     .from('citas')
                     .select('servicio_principal_nombre, monto_total')
-                    .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+                   .eq('barberia_id', window.CURRENT_BARBERIA_ID)
                     .gte('fecha', fechaInicioStr)
                     .lte('fecha', fechaFin);
                 
@@ -2772,7 +2818,7 @@ async function filtrarMetodosPago(periodo) {
         const { data: servicios, error } = await supabase
             .from('citas')
             .select('forma_pago, monto_total')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .gte('fecha', fechaInicioStr)
             .lte('fecha', fechaFin);
         
@@ -2916,7 +2962,7 @@ async function filtrarProductividad(periodo) {
         const { data: servicios, error } = await supabase
             .from('citas')
             .select('realizado_por_id, monto_total, usuarios!inner(nombre)')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .gte('fecha', fechaInicioStr)
             .lte('fecha', fechaFin)
             .eq('usuarios.activo', true);
@@ -3081,7 +3127,7 @@ servicios.forEach(s => {
         const { data: servicios, error } = await supabase
             .from('citas')
             .select('fecha, monto_total')
-            .eq('barberia_id', SUPABASE_CONFIG.barberiaId)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
             .gte('fecha', fechaInicioStr)
             .lte('fecha', fechaFin)
             .order('fecha', { ascending: true });
