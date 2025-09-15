@@ -25,61 +25,145 @@
             </div>
         </nav>
 
-        <!-- Contenido Principal -->
-        <div class="max-w-7xl mx-auto px-4 py-8">
-            <!-- Métricas Generales -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-sm text-gray-600">Total Barberías</div>
-                    <div class="text-3xl font-bold text-blue-600" id="totalBarberias">0</div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-sm text-gray-600">Activas</div>
-                    <div class="text-3xl font-bold text-green-600" id="barberiasActivas">0</div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-sm text-gray-600">En Trial</div>
-                    <div class="text-3xl font-bold text-yellow-600" id="barberiasEnTrial">0</div>
-                </div>
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <div class="text-sm text-gray-600">Ingresos/Mes</div>
-                    <div class="text-3xl font-bold text-purple-600" id="ingresosMensuales">$0</div>
-                </div>
-            </div>
-
-            <!-- Botón Nueva Barbería -->
-            <div class="mb-6">
-                <button onclick="mostrarModalNuevaBarberia()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
-                    <i class="fas fa-plus mr-2"></i>Nueva Barbería
+ <!-- Contenido Principal -->
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Tabs de navegación -->
+    <div class="bg-white rounded-lg shadow mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex space-x-1 p-1">
+                <button onclick="mostrarTab('dashboard')" id="tab-dashboard" 
+                    class="tab-btn bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
+                    <i class="fas fa-chart-line mr-2"></i>Dashboard
                 </button>
-            </div>
+                <button onclick="mostrarTab('barberias')" id="tab-barberias" 
+                    class="tab-btn text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg font-medium">
+                    <i class="fas fa-store mr-2"></i>Barberías
+                </button>
+                <button onclick="mostrarTab('facturacion')" id="tab-facturacion" 
+                    class="tab-btn text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg font-medium">
+                    <i class="fas fa-dollar-sign mr-2"></i>Facturación
+                </button>
+                <button onclick="mostrarTab('reportes')" id="tab-reportes" 
+                    class="tab-btn text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg font-medium">
+                    <i class="fas fa-file-alt mr-2"></i>Reportes
+                </button>
+            </nav>
+        </div>
+    </div>
 
-            <!-- Tabla de Barberías -->
-            <div class="bg-white rounded-lg shadow overflow-hidden">
-                <div class="px-6 py-4 border-b">
-                    <h2 class="text-xl font-bold">Gestión de Barberías</h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barbería</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trial Hasta</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuarios</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaBarberias" class="bg-white divide-y divide-gray-200">
-                            <!-- Se llenará dinámicamente -->
-                        </tbody>
-                    </table>
-                </div>
+    <!-- Contenido de Dashboard -->
+    <div id="content-dashboard" class="tab-content">
+        <!-- Métricas Generales -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="text-sm text-gray-600">Total Barberías</div>
+                <div class="text-3xl font-bold text-blue-600" id="totalBarberias">0</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="text-sm text-gray-600">Activas</div>
+                <div class="text-3xl font-bold text-green-600" id="barberiasActivas">0</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="text-sm text-gray-600">En Trial</div>
+                <div class="text-3xl font-bold text-yellow-600" id="barberiasEnTrial">0</div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="text-sm text-gray-600">Ingresos/Mes</div>
+                <div class="text-3xl font-bold text-purple-600" id="ingresosMensuales">$0</div>
+            </div>
+        </div>
+
+        <!-- Gráficos y más métricas aquí -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-lg font-bold mb-4">📊 Actividad Reciente</h3>
+            <p class="text-gray-600">Últimas barberías registradas, últimos pagos, etc.</p>
+        </div>
+    </div>
+
+    <!-- Contenido de Barberías -->
+    <div id="content-barberias" class="tab-content hidden">
+        <!-- Botón Nueva Barbería -->
+        <div class="mb-6">
+            <button onclick="mostrarModalNuevaBarberia()" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
+                <i class="fas fa-plus mr-2"></i>Nueva Barbería
+            </button>
+        </div>
+
+        <!-- Tabla de Barberías -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="px-6 py-4 border-b">
+                <h2 class="text-xl font-bold">Gestión de Barberías</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barbería</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trial Hasta</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuarios</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaBarberias" class="bg-white divide-y divide-gray-200">
+                        <!-- Se llenará dinámicamente -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
+    <!-- Contenido de Facturación -->
+    <div id="content-facturacion" class="tab-content hidden">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">💰 Control de Facturación</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <div class="text-sm text-green-600">Cobrado este mes</div>
+                    <div class="text-2xl font-bold text-green-900">$0</div>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <div class="text-sm text-yellow-600">Pendiente de cobro</div>
+                    <div class="text-2xl font-bold text-yellow-900">$0</div>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <div class="text-sm text-red-600">Morosos</div>
+                    <div class="text-2xl font-bold text-red-900">0</div>
+                </div>
+            </div>
+            
+            <p class="text-gray-600">Aquí aparecerá el listado de pagos, facturas pendientes, etc.</p>
+        </div>
+    </div>
+
+    <!-- Contenido de Reportes -->
+    <div id="content-reportes" class="tab-content hidden">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-bold mb-4">📈 Reportes y Análisis</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
+                    <h3 class="font-bold mb-2">📊 Reporte de Crecimiento</h3>
+                    <p class="text-gray-600 text-sm">Ver evolución de barberías registradas</p>
+                </div>
+                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
+                    <h3 class="font-bold mb-2">💰 Reporte Financiero</h3>
+                    <p class="text-gray-600 text-sm">Ingresos, proyecciones y métricas</p>
+                </div>
+                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
+                    <h3 class="font-bold mb-2">📋 Reporte de Uso</h3>
+                    <p class="text-gray-600 text-sm">Actividad por barbería</p>
+                </div>
+                <div class="border p-4 rounded-lg hover:shadow-lg cursor-pointer">
+                    <h3 class="font-bold mb-2">⏰ Trials por Vencer</h3>
+                    <p class="text-gray-600 text-sm">Barberías próximas a pagar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- Modal Nueva Barbería -->
     <div id="modalNuevaBarberia" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -120,10 +204,9 @@
         const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
 
         // Cargar datos al iniciar
-        window.addEventListener('load', () => {
-            cargarBarberias();
-            cargarMetricas();
-        });
+window.addEventListener('load', () => {
+    mostrarTab('dashboard');
+});
 
         async function cargarMetricas() {
             try {
@@ -318,6 +401,45 @@
                 alert('❌ Error: ' + error.message);
             }
         });
+        // ========== AGREGAR ESTE CÓDIGO AQUÍ ==========
+        // Función para cambiar entre tabs
+        function mostrarTab(tabId) {
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Desactivar todos los botones
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-gray-600');
+            });
+            
+            // Mostrar contenido seleccionado
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            
+            // Activar botón seleccionado
+            document.getElementById(`tab-${tabId}`).classList.add('bg-blue-600', 'text-white');
+            document.getElementById(`tab-${tabId}`).classList.remove('text-gray-600');
+            
+            // Cargar datos específicos de cada tab
+            switch(tabId) {
+                case 'dashboard':
+                    cargarMetricas();
+                    break;
+                case 'barberias':
+                    cargarBarberias();
+                    break;
+                case 'facturacion':
+                    // cargarFacturacion();
+                    break;
+                case 'reportes':
+                    // cargarReportes();
+                    break;
+            }
+        }
+        // ========== FIN DEL CÓDIGO NUEVO ==========
+ 
     </script>
 </body>
 </html>
