@@ -194,91 +194,98 @@ function parseFechaChile(fechaString) {
         // ===============================
         // FUNCIONES DE AUTENTICACIÓN
         // ===============================
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            showLoading();
-            hideError();
-            
-            try {
-// LOGIN DINÁMICO - Consultas separadas para evitar RLS
-const { data: usuarios, error } = await supabase
-    .from('usuarios')
-    .select('*')
-    .eq('email', email)
-    .eq('activo', true)
-    .single();
+     document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    showLoading();
+    hideError();
+    
+    try {
+        // LOGIN DINÁMICO - Consultas separadas para evitar RLS
+        console.log('🔍 Buscando usuario:', email);
+        
+        const { data: usuarios, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('email', email)
+            .eq('activo', true)
+            .single();
 
-if (error || !usuarios) {
-    showError('Usuario no encontrado o inactivo.');
-    hideLoading();
-    return;
-}
-
-// Consultar barbería por separado
-const { data: barberia, error: errorBarberia } = await supabase
-    .from('barberias')
-    .select('id, nombre, plan, trial_hasta, activa')
-    .eq('id', usuarios.barberia_id)
-    .single();
-
-if (errorBarberia || !barberia || !barberia.activa) {
-    showError('Barbería inactiva o no encontrada. Contacta al administrador.');
-    hideLoading();
-    return;
-}
-
-// Simular verificación de contraseña (temporal)
-if (password !== '123456') {
-    showError('Contraseña incorrecta.');
-    hideLoading();
-    return;
-}
-
-// Login exitoso - Datos dinámicos reales
-const userData = {
-    id: usuarios.id,
-    email: usuarios.email,
-    nombre: usuarios.nombre,
-    role: usuarios.role,
-    barberia_id: usuarios.barberia_id,
-    barberias: {
-        id: barberia.id,
-        nombre: barberia.nombre,
-        plan: barberia.plan,
-        trial_hasta: barberia.trial_hasta,
-        activa: barberia.activa
-    }
-};
-
-// Crear variable global dinámica
-window.CURRENT_BARBERIA_DATA = barberia;
-window.CURRENT_BARBERIA_ID = barberia.id;
-                
-// Crear variable global dinámica
-window.CURRENT_BARBERIA_DATA = usuarios.barberias;
-window.CURRENT_BARBERIA_ID = usuarios.barberias.id;
-                
-                // Login exitoso
-                currentUser = userData;
-                currentBarberia = userData.barberias;
-                userRole = userData.role;
-                
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                localStorage.setItem('userRole', userRole);
-                
-                initializeApp();
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showError('Error al iniciar sesión. Intenta nuevamente.');
-            }
-            
+        if (error || !usuarios) {
+            console.error('❌ Usuario no encontrado:', error);
+            showError('Usuario no encontrado o inactivo.');
             hideLoading();
+            return;
+        }
+        
+        console.log('✅ Usuario encontrado:', usuarios.nombre);
+
+        // Consultar barbería por separado
+        console.log('🔍 Buscando barbería ID:', usuarios.barberia_id);
+        
+        const { data: barberia, error: errorBarberia } = await supabase
+            .from('barberias')
+            .select('id, nombre, plan, trial_hasta, activa')
+            .eq('id', usuarios.barberia_id)
+            .single();
+
+        if (errorBarberia || !barberia || !barberia.activa) {
+            console.error('❌ Barbería no encontrada:', errorBarberia);
+            showError('Barbería inactiva o no encontrada. Contacta al administrador.');
+            hideLoading();
+            return;
+        }
+        
+        console.log('✅ Barbería encontrada:', barberia.nombre);
+
+        // Simular verificación de contraseña (temporal)
+        if (password !== '123456') {
+            showError('Contraseña incorrecta.');
+            hideLoading();
+            return;
+        }
+
+        // Login exitoso - Datos dinámicos reales
+        const userData = {
+            id: usuarios.id,
+            email: usuarios.email,
+            nombre: usuarios.nombre,
+            role: usuarios.role,
+            barberia_id: usuarios.barberia_id,
+            barberias: barberia  // Asignar barbería correctamente
+        };
+
+        // Crear variables globales dinámicas (SIN DUPLICAR)
+        window.CURRENT_BARBERIA_DATA = barberia;
+        window.CURRENT_BARBERIA_ID = barberia.id;
+        
+        console.log('🎯 Variables globales establecidas:', {
+            barberia_id: window.CURRENT_BARBERIA_ID,
+            barberia_nombre: window.CURRENT_BARBERIA_DATA.nombre
         });
+        
+        // Asignar a variables globales del sistema
+        currentUser = userData;
+        currentBarberia = barberia;  // Usar barberia directamente
+        userRole = userData.role;
+        
+        // Guardar en localStorage
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        localStorage.setItem('userRole', userRole);
+        
+        console.log('✅ Login exitoso, iniciando aplicación...');
+        initializeApp();
+        
+    } catch (error) {
+        console.error('❌ Error general:', error);
+        showError('Error al iniciar sesión. Intenta nuevamente.');
+    }
+    
+    hideLoading();
+});
         
         function showError(message) {
             const errorDiv = document.getElementById('loginError');
@@ -310,13 +317,15 @@ window.CURRENT_BARBERIA_ID = usuarios.barberias.id;
             // Actualizar información del usuario
             document.getElementById('userName').textContent = currentUser.nombre;
             document.getElementById('userRole').textContent = userRole === 'admin' ? 'Administrador' : 'Empleado';
-           // Actualizar información de barbería con datos reales
+            
+         // Actualizar información de barbería con datos reales
 const barberiaInfo = window.CURRENT_BARBERIA_DATA;
-if (barberiaInfo) {
+if (barberiaInfo && barberiaInfo.nombre) {
     document.getElementById('barberiaName').textContent = barberiaInfo.nombre;
-    console.log('✅ Barbería cargada:', barberiaInfo.nombre, 'Plan:', barberiaInfo.plan);
+    console.log('✅ Barbería cargada:', barberiaInfo.nombre, 'Plan:', barberiaInfo.plan || 'Sin plan');
 } else {
     document.getElementById('barberiaName').textContent = '';
+    console.log('⚠️ No se pudo cargar información de barbería');
 }
             
             // Verificar y mostrar alerta de trial si aplica
