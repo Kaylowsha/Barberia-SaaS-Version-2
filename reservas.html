@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar Cita - Barbería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .slot-disponible {
+            @apply bg-green-100 border border-green-300 text-green-800 hover:bg-green-200 cursor-pointer transition-colors;
+        }
+        .slot-ocupado {
+            @apply bg-gray-100 border border-gray-300 text-gray-500 cursor-not-allowed;
+        }
+        .slot-seleccionado {
+            @apply bg-blue-600 text-white border-blue-700;
+        }
+        .calendario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
+        <div class="max-w-md mx-auto text-center">
+            <i class="fas fa-calendar-plus text-3xl mb-2"></i>
+            <h1 class="text-2xl font-bold">Reservar Cita</h1>
+            <p class="text-blue-100 mt-1" id="nombreBarberia">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="max-w-md mx-auto p-4">
+        <!-- PASO 1: Seleccionar Fecha -->
+        <div id="paso1" class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">1</span>
+                Selecciona Fecha
+            </h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">📅 Fecha deseada:</label>
+                <input type="date" id="fechaSeleccionada" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    onchange="cargarHorarios()">
+            </div>
+
+            <div id="horariosContainer" style="display:none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">🕐 Horarios disponibles:</label>
+                
+                <!-- Horarios Mañana -->
+                <div class="mb-4">
+                    <div class="text-sm font-medium text-gray-600 mb-2">🌅 Mañana (10:00 - 13:00)</div>
+                    <div id="horariosMañana" class="calendario-grid">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Horarios Tarde -->
+                <div class="mb-4">
+                    <div class="text-sm font-medium text-gray-600 mb-2">🌆 Tarde (15:00 - 20:00)</div>
+                    <div id="horariosTarde" class="calendario-grid">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PASO 2: Seleccionar Barbero -->
+        <div id="paso2" class="bg-white rounded-lg shadow-lg p-6 mb-4" style="display:none;">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">2</span>
+                Selecciona Barbero
+            </h2>
+            
+            <select id="barberoSeleccionado" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="mostrarPaso3()">
+                <option value="">Selecciona un barbero...</option>
+                <!-- Se llenará dinámicamente -->
+            </select>
+        </div>
+
+        <!-- PASO 3: Datos del Cliente -->
+        <div id="paso3" class="bg-white rounded-lg shadow-lg p-6 mb-4" style="display:none;">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">3</span>
+                Tus Datos
+            </h2>
+            
+            <form id="formReserva">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">👤 Nombre completo *</label>
+                        <input type="text" id="clienteNombre" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">📱 Teléfono *</label>
+                        <input type="tel" id="clienteTelefono" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="+56 9 1234 5678" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">📧 Email (opcional para confirmación)</label>
+                        <input type="email" id="clienteEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="tu@email.com">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">📝 Notas (opcional)</label>
+                        <textarea id="clienteNotas" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Corte fade, barba, etc..."></textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 mt-6">
+                    <i class="fas fa-check mr-2"></i>Confirmar Reserva
+                </button>
+            </form>
+        </div>
+
+        <!-- Resumen (oculto inicialmente) -->
+        <div id="resumenFinal" class="bg-green-50 border border-green-200 rounded-lg p-6" style="display:none;">
+            <div class="text-center">
+                <i class="fas fa-check-circle text-green-600 text-4xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-green-800 mb-4">¡Cita Agendada!</h2>
+                
+                <div id="detallesReserva" class="bg-white p-4 rounded-lg mb-4 text-left">
+                    <!-- Se llenará con los detalles -->
+                </div>
+                
+                <div id="mensajeEmail" class="text-sm text-green-700 mb-4" style="display:none;">
+                    📧 Confirmación enviada a tu email
+                </div>
+                
+                <p class="text-green-700 font-medium">¡Nos vemos pronto! 👋</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="mt-4 text-gray-600">Procesando reserva...</p>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let barberiaData = null;
+        let barberosDisponibles = [];
+        let fechaSeleccionada = null;
+        let horarioSeleccionado = null;
+        let barberoSeleccionado = null;
+        
+        // Configuración (usar la misma que tu sistema)
+        const SUPABASE_URL = 'https://uzmdreqbcacwkkfwpkui.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6bWRyZXFiY2Fjd2trZndwa3VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDU1MTMsImV4cCI6MjA3MzQ4MTUxM30.wSWo1uebanmw9rwzJGNGlzkgNBFggXHvEF4dj1uEm58';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Obtener ID de barbería desde URL (ej: reservas.html?barberia=uuid)
+        const urlParams = new URLSearchParams(window.location.search);
+        const barberiaId = urlParams.get('barberia') || '71a5a0c4-1f78-4e2d-ae74-67090c6c9d25'; // Rulos por defecto
+
+        // Horarios disponibles
+        const HORARIOS_MAÑANA = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30'];
+        const HORARIOS_TARDE = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+
+        // Inicializar
+        window.addEventListener('load', async () => {
+            await cargarDatosBarberia();
+            await cargarBarberos();
+            configurarFechaMinima();
+        });
+
+        async function cargarDatosBarberia() {
+            try {
+                const { data, error } = await supabase
+                    .from('barberias')
+                    .select('nombre')
+                    .eq('id', barberiaId)
+                    .single();
+
+                if (data) {
+                    document.getElementById('nombreBarberia').textContent = data.nombre;
+                    barberiaData = data;
+                }
+            } catch (error) {
+                console.error('Error cargando barbería:', error);
+                document.getElementById('nombreBarberia').textContent = 'Barbería SaaS';
+            }
+        }
+
+        async function cargarBarberos() {
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .select('id, nombre')
+                    .eq('barberia_id', barberiaId)
+                    .eq('activo', true);
+
+                if (data) {
+                    barberosDisponibles = data;
+                    const select = document.getElementById('barberoSeleccionado');
+                    
+                    data.forEach(barbero => {
+                        const option = document.createElement('option');
+                        option.value = barbero.id;
+                        option.textContent = barbero.nombre;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando barberos:', error);
+            }
+        }
+
+        function configurarFechaMinima() {
+            const hoy = new Date();
+            const mañana = new Date();
+            mañana.setDate(hoy.getDate() + 1);
+            
+            document.getElementById('fechaSeleccionada').min = mañana.toISOString().split('T')[0];
+        }
+
+        function cargarHorarios() {
+            const fecha = document.getElementById('fechaSeleccionada').value;
+            if (!fecha) return;
+
+            fechaSeleccionada = fecha;
+            const fechaObj = new Date(fecha + 'T00:00:00');
+            const diaSemana = fechaObj.getDay();
+
+            // Verificar que no sea domingo
+            if (diaSemana === 0) {
+                alert('❌ Los domingos estamos cerrados. Por favor selecciona otro día.');
+                document.getElementById('fechaSeleccionada').value = '';
+                return;
+            }
+
+            // Mostrar contenedor de horarios
+            document.getElementById('horariosContainer').style.display = 'block';
+
+            // Generar horarios mañana
+            generarHorarios('horariosMañana', HORARIOS_MAÑANA);
+            
+            // Generar horarios tarde
+            generarHorarios('horariosTarde', HORARIOS_TARDE);
+        }
+
+        function generarHorarios(containerId, horarios) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            horarios.forEach(hora => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'slot-disponible p-2 rounded-lg text-sm font-medium';
+                btn.textContent = hora;
+                btn.onclick = () => seleccionarHorario(hora, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function seleccionarHorario(hora, elemento) {
+            // Limpiar selección previa
+            document.querySelectorAll('.slot-seleccionado').forEach(el => {
+                el.classList.remove('slot-seleccionado');
+                el.classList.add('slot-disponible');
+            });
+
+            // Seleccionar nuevo horario
+            elemento.classList.remove('slot-disponible');
+            elemento.classList.add('slot-seleccionado');
+            
+            horarioSeleccionado = hora;
+            mostrarPaso2();
+        }
+
+        function mostrarPaso2() {
+            if (!horarioSeleccionado) return;
+            document.getElementById('paso2').style.display = 'block';
+        }
+
+        function mostrarPaso3() {
+            const barbero = document.getElementById('barberoSeleccionado').value;
+            if (!barbero) return;
+            
+            barberoSeleccionado = barbero;
+            document.getElementById('paso3').style.display = 'block';
+        }
+
+        // Manejar envío del formulario
+        document.getElementById('formReserva').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await procesarReserva();
+        });
+
+        async function procesarReserva() {
+            const loading = document.getElementById('loading');
+            loading.classList.remove('hidden');
+
+            try {
+                const nombre = document.getElementById('clienteNombre').value;
+                const telefono = document.getElementById('clienteTelefono').value;
+                const email = document.getElementById('clienteEmail').value;
+                const notas = document.getElementById('clienteNotas').value;
+
+                // Obtener nombre del barbero
+                const barbero = barberosDisponibles.find(b => b.id === barberoSeleccionado);
+                
+                const reserva = {
+                    fecha: fechaSeleccionada,
+                    hora: horarioSeleccionado,
+                    barberia_id: barberiaId,
+                    barberia_nombre: barberiaData.nombre,
+                    barbero_id: barberoSeleccionado,
+                    barbero_nombre: barbero.nombre,
+                    cliente_nombre: nombre,
+                    cliente_telefono: telefono,
+                    cliente_email: email || null,
+                    notas: notas || null,
+                    created_at: new Date().toISOString()
+                };
+
+                // Aquí irá la lógica para guardar en Google Sheets
+                await guardarReserva(reserva);
+
+                // Enviar email si se proporcionó
+                if (email) {
+                    await enviarEmailConfirmacion(reserva);
+                }
+
+                // Mostrar resumen
+                mostrarResumen(reserva);
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al procesar la reserva. Intenta nuevamente.');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        async function guardarReserva(reserva) {
+            // Por ahora solo log - después implementaremos Google Sheets
+            console.log('Guardando reserva:', reserva);
+            
+            // Simulamos un guardado exitoso
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        async function enviarEmailConfirmacion(reserva) {
+            try {
+                // Configurar EmailJS (necesitarás crear cuenta gratuita)
+                // emailjs.init("YOUR_USER_ID");
+                
+                const templateParams = {
+                    to_email: reserva.cliente_email,
+                    cliente_nombre: reserva.cliente_nombre,
+                    barberia_nombre: reserva.barberia_nombre,
+                    fecha: new Date(reserva.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
+                        weekday: 'long',
+                        day: 'numeric', 
+                        month: 'long',
+                        year: 'numeric'
+                    }),
+                    hora: reserva.hora,
+                    barbero_nombre: reserva.barbero_nombre,
+                    notas: reserva.notas || 'Sin notas especiales'
+                };
+
+                // await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams);
+                console.log('Email enviado:', templateParams);
+                
+            } catch (error) {
+                console.error('Error enviando email:', error);
+            }
+        }
+
+        function mostrarResumen(reserva) {
+            const fechaFormateada = new Date(reserva.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            document.getElementById('detallesReserva').innerHTML = `
+                <div class="space-y-2">
+                    <div><strong>📅 Fecha:</strong> ${fechaFormateada}</div>
+                    <div><strong>🕐 Hora:</strong> ${reserva.hora}</div>
+                    <div><strong>👨‍💼 Barbero:</strong> ${reserva.barbero_nombre}</div>
+                    <div><strong>👤 Cliente:</strong> ${reserva.cliente_nombre}</div>
+                    <div><strong>📱 Teléfono:</strong> ${reserva.cliente_telefono}</div>
+                    ${reserva.notas ? `<div><strong>📝 Notas:</strong> ${reserva.notas}</div>` : ''}
+                </div>
+            `;
+
+            // Mostrar mensaje de email si se envió
+            if (reserva.cliente_email) {
+                document.getElementById('mensajeEmail').style.display = 'block';
+            }
+
+            // Ocultar pasos y mostrar resumen
+            document.getElementById('paso1').style.display = 'none';
+            document.getElementById('paso2').style.display = 'none';
+            document.getElementById('paso3').style.display = 'none';
+            document.getElementById('resumenFinal').style.display = 'block';
+
+            // Scroll al resumen
+            document.getElementById('resumenFinal').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
