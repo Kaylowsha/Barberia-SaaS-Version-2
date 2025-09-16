@@ -10,142 +10,212 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
         .slot-disponible {
-            @apply bg-green-100 border border-green-300 text-green-800 hover:bg-green-200 cursor-pointer transition-colors;
+            @apply bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold hover:from-green-500 hover:to-green-600 cursor-pointer transition-all duration-300 transform hover:scale-105 shadow-lg;
         }
         .slot-ocupado {
-            @apply bg-gray-100 border border-gray-300 text-gray-500 cursor-not-allowed;
+            @apply bg-gray-200 text-gray-500 cursor-not-allowed;
         }
         .slot-seleccionado {
-            @apply bg-blue-600 text-white border-blue-700;
+            @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl transform scale-105;
         }
-        .calendario-grid {
+        .horarios-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 8px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .barbero-card {
+            @apply bg-white border-2 border-gray-200 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:border-blue-500 hover:shadow-lg;
+        }
+        .barbero-card.selected {
+            @apply border-blue-500 bg-blue-50 shadow-lg;
+        }
+        .step-indicator {
+            @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold text-lg shadow-lg;
+        }
+        .paso-completado {
+            @apply bg-gradient-to-r from-green-400 to-green-500;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
-        <div class="max-w-md mx-auto text-center">
-            <i class="fas fa-calendar-plus text-3xl mb-2"></i>
-            <h1 class="text-2xl font-bold">Reservar Cita</h1>
-            <p class="text-blue-100 mt-1" id="nombreBarberia">Cargando...</p>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header Atractivo -->
+    <div class="gradient-bg text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-10"></div>
+        <div class="relative max-w-md mx-auto text-center py-8 px-6">
+            <div class="mb-4">
+                <i class="fas fa-cut text-4xl mb-3 animate-pulse"></i>
+                <h1 class="text-3xl font-bold mb-2">¡Reserva tu Cita!</h1>
+                <p class="text-purple-100 text-lg" id="nombreBarberia">Cargando...</p>
+            </div>
+            <!-- Progress Bar -->
+            <div class="mt-6">
+                <div class="flex justify-between items-center">
+                    <div id="indicator1" class="step-indicator">1</div>
+                    <div class="flex-1 h-2 bg-purple-300 mx-2 rounded-full">
+                        <div id="progress1" class="h-full bg-white rounded-full transition-all duration-500" style="width: 33%"></div>
+                    </div>
+                    <div id="indicator2" class="step-indicator opacity-50">2</div>
+                    <div class="flex-1 h-2 bg-purple-300 mx-2 rounded-full">
+                        <div id="progress2" class="h-full bg-white rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div id="indicator3" class="step-indicator opacity-50">3</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Contenido Principal -->
-    <div class="max-w-md mx-auto p-4">
-        <!-- PASO 1: Seleccionar Fecha -->
-        <div id="paso1" class="bg-white rounded-lg shadow-lg p-6 mb-4">
-            <h2 class="text-xl font-bold mb-4 flex items-center">
-                <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">1</span>
-                Selecciona Fecha
-            </h2>
-            
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">📅 Fecha deseada:</label>
-                <input type="date" id="fechaSeleccionada" 
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    onchange="cargarHorarios()">
+    <div class="max-w-md mx-auto px-4 -mt-4 relative z-10">
+        
+        <!-- PASO 1: Fecha y Horario -->
+        <div id="paso1" class="bg-white rounded-2xl card-shadow mb-6 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-calendar-alt mr-3"></i>
+                    ¿Cuándo te vemos?
+                </h2>
             </div>
-
-            <div id="horariosContainer" style="display:none;">
-                <label class="block text-sm font-medium text-gray-700 mb-2">🕐 Horarios disponibles:</label>
-                
-                <!-- Horarios Mañana -->
-                <div class="mb-4">
-                    <div class="text-sm font-medium text-gray-600 mb-2">🌅 Mañana (10:00 - 13:00)</div>
-                    <div id="horariosMañana" class="calendario-grid">
-                        <!-- Se llenará dinámicamente -->
-                    </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-3">📅 Selecciona la fecha</label>
+                    <input type="date" id="fechaSeleccionada" 
+                        class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg"
+                        onchange="cargarHorarios()">
                 </div>
 
-                <!-- Horarios Tarde -->
-                <div class="mb-4">
-                    <div class="text-sm font-medium text-gray-600 mb-2">🌆 Tarde (15:00 - 20:00)</div>
-                    <div id="horariosTarde" class="calendario-grid">
-                        <!-- Se llenará dinámicamente -->
+                <div id="horariosContainer" style="display:none;">
+                    <!-- Horarios Mañana -->
+                    <div class="mb-6">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-sun text-yellow-500 mr-2"></i>
+                            <span class="font-bold text-gray-700">Mañana (10:00 - 13:00)</span>
+                        </div>
+                        <div id="horariosMañana" class="horarios-grid">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Horarios Tarde -->
+                    <div class="mb-4">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-moon text-indigo-500 mr-2"></i>
+                            <span class="font-bold text-gray-700">Tarde (15:00 - 20:00)</span>
+                        </div>
+                        <div id="horariosTarde" class="horarios-grid">
+                            <!-- Se llenará dinámicamente -->
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- PASO 2: Seleccionar Barbero -->
-        <div id="paso2" class="bg-white rounded-lg shadow-lg p-6 mb-4" style="display:none;">
-            <h2 class="text-xl font-bold mb-4 flex items-center">
-                <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">2</span>
-                Selecciona Barbero
-            </h2>
+        <div id="paso2" class="bg-white rounded-2xl card-shadow mb-6 overflow-hidden" style="display:none;">
+            <div class="bg-gradient-to-r from-green-500 to-teal-600 text-white p-4">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-user-tie mr-3"></i>
+                    ¿Con quién prefieres?
+                </h2>
+            </div>
             
-            <select id="barberoSeleccionado" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" onchange="mostrarPaso3()">
-                <option value="">Selecciona un barbero...</option>
-                <!-- Se llenará dinámicamente -->
-            </select>
+            <div class="p-6">
+                <div id="barberosContainer" class="space-y-3">
+                    <!-- Se llenará dinámicamente con cards -->
+                </div>
+            </div>
         </div>
 
         <!-- PASO 3: Datos del Cliente -->
-        <div id="paso3" class="bg-white rounded-lg shadow-lg p-6 mb-4" style="display:none;">
-            <h2 class="text-xl font-bold mb-4 flex items-center">
-                <span class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">3</span>
-                Tus Datos
-            </h2>
+        <div id="paso3" class="bg-white rounded-2xl card-shadow mb-6 overflow-hidden" style="display:none;">
+            <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-4">
+                <h2 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-user-edit mr-3"></i>
+                    Cuéntanos de ti
+                </h2>
+            </div>
             
-            <form id="formReserva">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">👤 Nombre completo *</label>
-                        <input type="text" id="clienteNombre" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
+            <div class="p-6">
+                <form id="formReserva">
+                    <div class="space-y-5">
+                        <div class="relative">
+                            <i class="fas fa-user absolute left-3 top-4 text-gray-400"></i>
+                            <input type="text" id="clienteNombre" 
+                                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg" 
+                                placeholder="Tu nombre completo" required>
+                        </div>
+                        
+                        <div class="relative">
+                            <i class="fas fa-phone absolute left-3 top-4 text-gray-400"></i>
+                            <input type="tel" id="clienteTelefono" 
+                                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg" 
+                                placeholder="+56 9 1234 5678" required>
+                        </div>
+                        
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-4 text-gray-400"></i>
+                            <input type="email" id="clienteEmail" 
+                                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-lg" 
+                                placeholder="tu@email.com (opcional)">
+                            <span class="text-xs text-gray-500 mt-1 block">📧 Para enviarte la confirmación</span>
+                        </div>
+                        
+                        <div class="relative">
+                            <i class="fas fa-comment absolute left-3 top-4 text-gray-400"></i>
+                            <textarea id="clienteNotas" rows="3" 
+                                class="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none" 
+                                placeholder="¿Algún estilo especial? (opcional)"></textarea>
+                        </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">📱 Teléfono *</label>
-                        <input type="tel" id="clienteTelefono" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="+56 9 1234 5678" required>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">📧 Email (opcional para confirmación)</label>
-                        <input type="email" id="clienteEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="tu@email.com">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">📝 Notas (opcional)</label>
-                        <textarea id="clienteNotas" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Corte fade, barba, etc..."></textarea>
-                    </div>
-                </div>
-                
-                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 mt-6">
-                    <i class="fas fa-check mr-2"></i>Confirmar Reserva
-                </button>
-            </form>
+                    <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 mt-6">
+                        <i class="fas fa-check mr-2"></i>¡Confirmar mi Cita!
+                    </button>
+                </form>
+            </div>
         </div>
 
-        <!-- Resumen (oculto inicialmente) -->
-        <div id="resumenFinal" class="bg-green-50 border border-green-200 rounded-lg p-6" style="display:none;">
-            <div class="text-center">
-                <i class="fas fa-check-circle text-green-600 text-4xl mb-4"></i>
-                <h2 class="text-2xl font-bold text-green-800 mb-4">¡Cita Agendada!</h2>
+        <!-- Resumen Final -->
+        <div id="resumenFinal" class="bg-gradient-to-br from-green-400 to-green-600 rounded-2xl card-shadow text-white overflow-hidden" style="display:none;">
+            <div class="p-6 text-center">
+                <div class="mb-4">
+                    <i class="fas fa-check-circle text-6xl mb-4 animate-bounce"></i>
+                    <h2 class="text-3xl font-bold mb-2">¡Listo! 🎉</h2>
+                    <p class="text-green-100 text-lg">Tu cita está confirmada</p>
+                </div>
                 
-                <div id="detallesReserva" class="bg-white p-4 rounded-lg mb-4 text-left">
+                <div id="detallesReserva" class="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-5 mb-4 text-left">
                     <!-- Se llenará con los detalles -->
                 </div>
                 
-                <div id="mensajeEmail" class="text-sm text-green-700 mb-4" style="display:none;">
-                    📧 Confirmación enviada a tu email
+                <div id="mensajeEmail" class="bg-white bg-opacity-20 backdrop-blur-sm rounded-xl p-3 mb-4" style="display:none;">
+                    <i class="fas fa-envelope mr-2"></i>
+                    <span class="text-sm">Confirmación enviada a tu email</span>
                 </div>
                 
-                <p class="text-green-700 font-medium">¡Nos vemos pronto! 👋</p>
+                <div class="space-y-3">
+                    <p class="text-green-100 font-medium text-lg">¡Nos vemos pronto! 👋</p>
+                    <p class="text-green-200 text-sm">
+                        💡 Guarda esta pantalla o toma screenshot
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Loading -->
-    <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p class="mt-4 text-gray-600">Procesando reserva...</p>
+    <!-- Loading Moderno -->
+    <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 text-center card-shadow">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4"></div>
+            <p class="text-gray-700 font-medium">Confirmando tu cita...</p>
+            <p class="text-gray-500 text-sm mt-1">Solo un momento ✨</p>
         </div>
     </div>
 
@@ -157,16 +227,14 @@
         let horarioSeleccionado = null;
         let barberoSeleccionado = null;
         
-        // Configuración (usar la misma que tu sistema)
+        // Configuración
         const SUPABASE_URL = 'https://uzmdreqbcacwkkfwpkui.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6bWRyZXFiY2Fjd2trZndwa3VpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5MDU1MTMsImV4cCI6MjA3MzQ4MTUxM30.wSWo1uebanmw9rwzJGNGlzkgNBFggXHvEF4dj1uEm58';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Obtener ID de barbería desde URL (ej: reservas.html?barberia=uuid)
         const urlParams = new URLSearchParams(window.location.search);
-        const barberiaId = urlParams.get('barberia') || '71a5a0c4-1f78-4e2d-ae74-67090c6c9d25'; // Rulos por defecto
+        const barberiaId = urlParams.get('barberia') || '71a5a0c4-1f78-4e2d-ae74-67090c6c9d25';
 
-        // Horarios disponibles
         const HORARIOS_MAÑANA = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30'];
         const HORARIOS_TARDE = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
 
@@ -205,18 +273,56 @@
 
                 if (data) {
                     barberosDisponibles = data;
-                    const select = document.getElementById('barberoSeleccionado');
-                    
-                    data.forEach(barbero => {
-                        const option = document.createElement('option');
-                        option.value = barbero.id;
-                        option.textContent = barbero.nombre;
-                        select.appendChild(option);
-                    });
+                    generarCardsBarberos(data);
                 }
             } catch (error) {
                 console.error('Error cargando barberos:', error);
             }
+        }
+
+        function generarCardsBarberos(barberos) {
+            const container = document.getElementById('barberosContainer');
+            container.innerHTML = '';
+
+            barberos.forEach((barbero, index) => {
+                const iconos = ['fas fa-user-tie', 'fas fa-male', 'fas fa-user-graduate'];
+                const colores = ['from-blue-400 to-blue-600', 'from-purple-400 to-purple-600', 'from-green-400 to-green-600'];
+                
+                const card = document.createElement('div');
+                card.className = 'barbero-card';
+                card.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gradient-to-r ${colores[index % colores.length]} w-12 h-12 rounded-full flex items-center justify-center text-white">
+                            <i class="${iconos[index % iconos.length]}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-800">${barbero.nombre}</h3>
+                            <p class="text-gray-500 text-sm">Barbero profesional</p>
+                        </div>
+                        <div class="text-green-500">
+                            <i class="fas fa-check-circle hidden selected-icon"></i>
+                        </div>
+                    </div>
+                `;
+                card.onclick = () => seleccionarBarbero(barbero.id, card);
+                container.appendChild(card);
+            });
+        }
+
+        function seleccionarBarbero(barberoId, cardElement) {
+            // Limpiar selección previa
+            document.querySelectorAll('.barbero-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.selected-icon').classList.add('hidden');
+            });
+
+            // Seleccionar nuevo barbero
+            cardElement.classList.add('selected');
+            cardElement.querySelector('.selected-icon').classList.remove('hidden');
+            
+            barberoSeleccionado = barberoId;
+            actualizarProgreso(3);
+            mostrarPaso3();
         }
 
         function configurarFechaMinima() {
@@ -235,20 +341,14 @@
             const fechaObj = new Date(fecha + 'T00:00:00');
             const diaSemana = fechaObj.getDay();
 
-            // Verificar que no sea domingo
             if (diaSemana === 0) {
                 alert('❌ Los domingos estamos cerrados. Por favor selecciona otro día.');
                 document.getElementById('fechaSeleccionada').value = '';
                 return;
             }
 
-            // Mostrar contenedor de horarios
             document.getElementById('horariosContainer').style.display = 'block';
-
-            // Generar horarios mañana
             generarHorarios('horariosMañana', HORARIOS_MAÑANA);
-            
-            // Generar horarios tarde
             generarHorarios('horariosTarde', HORARIOS_TARDE);
         }
 
@@ -259,7 +359,7 @@
             horarios.forEach(hora => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'slot-disponible p-2 rounded-lg text-sm font-medium';
+                btn.className = 'slot-disponible px-3 py-3 rounded-xl text-sm font-bold';
                 btn.textContent = hora;
                 btn.onclick = () => seleccionarHorario(hora, btn);
                 container.appendChild(btn);
@@ -267,31 +367,44 @@
         }
 
         function seleccionarHorario(hora, elemento) {
-            // Limpiar selección previa
             document.querySelectorAll('.slot-seleccionado').forEach(el => {
                 el.classList.remove('slot-seleccionado');
                 el.classList.add('slot-disponible');
             });
 
-            // Seleccionar nuevo horario
             elemento.classList.remove('slot-disponible');
             elemento.classList.add('slot-seleccionado');
             
             horarioSeleccionado = hora;
+            actualizarProgreso(2);
             mostrarPaso2();
         }
 
         function mostrarPaso2() {
             if (!horarioSeleccionado) return;
             document.getElementById('paso2').style.display = 'block';
+            document.getElementById('paso2').scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function mostrarPaso3() {
-            const barbero = document.getElementById('barberoSeleccionado').value;
-            if (!barbero) return;
-            
-            barberoSeleccionado = barbero;
+            if (!barberoSeleccionado) return;
             document.getElementById('paso3').style.display = 'block';
+            document.getElementById('paso3').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function actualizarProgreso(paso) {
+            // Actualizar indicadores
+            for (let i = 1; i <= paso; i++) {
+                const indicator = document.getElementById(`indicator${i}`);
+                indicator.classList.add('paso-completado');
+                indicator.classList.remove('opacity-50');
+            }
+
+            // Actualizar barras de progreso
+            const progresos = {1: '33%', 2: '66%', 3: '100%'};
+            for (let i = 1; i <= paso; i++) {
+                document.getElementById(`progress${i}`).style.width = progresos[i] || '0%';
+            }
         }
 
         // Manejar envío del formulario
@@ -310,7 +423,6 @@
                 const email = document.getElementById('clienteEmail').value;
                 const notas = document.getElementById('clienteNotas').value;
 
-                // Obtener nombre del barbero
                 const barbero = barberosDisponibles.find(b => b.id === barberoSeleccionado);
                 
                 const reserva = {
@@ -327,15 +439,12 @@
                     created_at: new Date().toISOString()
                 };
 
-                // Aquí irá la lógica para guardar en Google Sheets
                 await guardarReserva(reserva);
 
-                // Enviar email si se proporcionó
                 if (email) {
                     await enviarEmailConfirmacion(reserva);
                 }
 
-                // Mostrar resumen
                 mostrarResumen(reserva);
 
             } catch (error) {
@@ -347,18 +456,12 @@
         }
 
         async function guardarReserva(reserva) {
-            // Por ahora solo log - después implementaremos Google Sheets
             console.log('Guardando reserva:', reserva);
-            
-            // Simulamos un guardado exitoso
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
         }
 
         async function enviarEmailConfirmacion(reserva) {
             try {
-                // Configurar EmailJS (necesitarás crear cuenta gratuita)
-                // emailjs.init("YOUR_USER_ID");
-                
                 const templateParams = {
                     to_email: reserva.cliente_email,
                     cliente_nombre: reserva.cliente_nombre,
@@ -374,7 +477,6 @@
                     notas: reserva.notas || 'Sin notas especiales'
                 };
 
-                // await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams);
                 console.log('Email enviado:', templateParams);
                 
             } catch (error) {
@@ -391,17 +493,32 @@
             });
 
             document.getElementById('detallesReserva').innerHTML = `
-                <div class="space-y-2">
-                    <div><strong>📅 Fecha:</strong> ${fechaFormateada}</div>
-                    <div><strong>🕐 Hora:</strong> ${reserva.hora}</div>
-                    <div><strong>👨‍💼 Barbero:</strong> ${reserva.barbero_nombre}</div>
-                    <div><strong>👤 Cliente:</strong> ${reserva.cliente_nombre}</div>
-                    <div><strong>📱 Teléfono:</strong> ${reserva.cliente_telefono}</div>
-                    ${reserva.notas ? `<div><strong>📝 Notas:</strong> ${reserva.notas}</div>` : ''}
+                <div class="space-y-3 text-white">
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar-day w-6 text-white mr-3"></i>
+                        <span><strong>Fecha:</strong> ${fechaFormateada}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock w-6 text-white mr-3"></i>
+                        <span><strong>Hora:</strong> ${reserva.hora}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-user-tie w-6 text-white mr-3"></i>
+                        <span><strong>Barbero:</strong> ${reserva.barbero_nombre}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-user w-6 text-white mr-3"></i>
+                        <span><strong>Cliente:</strong> ${reserva.cliente_nombre}</span>
+                    </div>
+                    ${reserva.notas ? `
+                        <div class="flex items-start">
+                            <i class="fas fa-comment w-6 text-white mr-3 mt-1"></i>
+                            <span><strong>Notas:</strong> ${reserva.notas}</span>
+                        </div>
+                    ` : ''}
                 </div>
             `;
 
-            // Mostrar mensaje de email si se envió
             if (reserva.cliente_email) {
                 document.getElementById('mensajeEmail').style.display = 'block';
             }
@@ -412,7 +529,6 @@
             document.getElementById('paso3').style.display = 'none';
             document.getElementById('resumenFinal').style.display = 'block';
 
-            // Scroll al resumen
             document.getElementById('resumenFinal').scrollIntoView({ behavior: 'smooth' });
         }
     </script>
