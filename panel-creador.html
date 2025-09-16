@@ -577,26 +577,7 @@ async function convertirAPremium(barberiaId) {
     // Aquí puedes agregar gráficos y reportes más complejos después
     console.log('Cargando reportes...');
 }
-      // Verificar acceso al cargar
-function verificarAcceso() {
-    const autenticado = sessionStorage.getItem('panelAutenticado');
     
-    if (!autenticado) {
-        const password = prompt('Ingresa la contraseña del Panel del Creador:');
-        
-        // Cambia 'admin123' por la contraseña que quieras
-        if (password === 'admin123') {
-            sessionStorage.setItem('panelAutenticado', 'true');
-            mostrarTab('dashboard');
-        } else {
-            alert('Contraseña incorrecta');
-            window.location.href = 'index.html';
-        }
-    } else {
-        mostrarTab('dashboard');
-    }
-}
-
 // Verificar sesión al cargar
 window.addEventListener('load', () => {
     const autenticado = sessionStorage.getItem('creadorAutenticado');
@@ -642,18 +623,7 @@ function cerrarSesion() {
     }
 }
 
-// Función para cerrar sesión
-function cerrarSesionCreador() {
-    localStorage.removeItem('creadorAutenticado');
-    window.location.href = 'login-creador.html';
-}
-        // Función para cerrar sesión
-function cerrarSesion() {
-    if (confirm('¿Cerrar sesión del Panel del Creador?')) {
-        sessionStorage.removeItem('panelAutenticado');
-        verificarAcceso();
-    }
-}
+
         // Función para cambiar entre tabs
         function mostrarTab(tabId) {
             // Ocultar todos los contenidos
