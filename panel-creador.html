@@ -18,7 +18,7 @@
                     <h1 class="text-2xl font-bold">
                         <i class="fas fa-crown mr-2"></i>Panel del Creador
                     </h1>
-<button onclick="alert('Ya estás en el Panel del Creador')" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+<button onclick="cerrarSesion()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
     <i class="fas fa-sign-out-alt mr-2"></i>Salir
 </button>
                 </div>
@@ -542,15 +542,42 @@ async function convertirAPremium(barberiaId) {
     // Aquí puedes agregar gráficos y reportes más complejos después
     console.log('Cargando reportes...');
 }
-      // Cargar datos al iniciar
+      // Verificar acceso al cargar
+function verificarAcceso() {
+    const autenticado = sessionStorage.getItem('panelAutenticado');
+    
+    if (!autenticado) {
+        const password = prompt('Ingresa la contraseña del Panel del Creador:');
+        
+        // Cambia 'admin123' por la contraseña que quieras
+        if (password === 'admin123') {
+            sessionStorage.setItem('panelAutenticado', 'true');
+            mostrarTab('dashboard');
+        } else {
+            alert('Contraseña incorrecta');
+            window.location.href = 'index.html';
+        }
+    } else {
+        mostrarTab('dashboard');
+    }
+}
+
+// Cargar datos al iniciar
 window.addEventListener('load', () => {
-    mostrarTab('dashboard');
+    verificarAcceso();
 });
 
 // Función para cerrar sesión
 function cerrarSesionCreador() {
     localStorage.removeItem('creadorAutenticado');
     window.location.href = 'login-creador.html';
+}
+        // Función para cerrar sesión
+function cerrarSesion() {
+    if (confirm('¿Cerrar sesión del Panel del Creador?')) {
+        sessionStorage.removeItem('panelAutenticado');
+        verificarAcceso();
+    }
 }
         // Función para cambiar entre tabs
         function mostrarTab(tabId) {
