@@ -280,7 +280,7 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const barberiaId = urlParams.get('barberia') || '71a5a0c4-1f78-4e2d-ae74-67090c6c9d25';
+        const barberiaId = urlParams.get('barberia') || '450e5ba0-6771-41fd-9003-2706aac125af'; // Rulos por defecto
 
         const HORARIOS_MAÑANA = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30'];
         const HORARIOS_TARDE = ['15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
@@ -298,15 +298,19 @@
                     .from('barberias')
                     .select('nombre')
                     .eq('id', barberiaId)
+                    .eq('activa', true)
                     .single();
 
                 if (data) {
                     document.getElementById('nombreBarberia').textContent = data.nombre;
                     barberiaData = data;
+                } else {
+                    document.getElementById('nombreBarberia').textContent = 'Barbería no disponible';
+                    console.error('Barbería inactiva o no encontrada');
                 }
             } catch (error) {
                 console.error('Error cargando barbería:', error);
-                document.getElementById('nombreBarberia').textContent = 'Barbería SaaS';
+                document.getElementById('nombreBarberia').textContent = 'Error de conexión';
             }
         }
 
