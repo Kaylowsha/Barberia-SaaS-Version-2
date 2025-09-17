@@ -3621,9 +3621,9 @@ async function cargarCitasAgenda() {
         console.log(`📊 Buscando citas desde ${fechaDesde} hasta ${fechaHasta}`);
         
         // Simular carga desde Formspree (por ahora datos demo)
-        const citasDemo = await obtenerCitasFormspree(fechaDesde, fechaHasta, filtro);
+        const citasReales = await obtenerCitasDesdeSupabase(fechaDesde, fechaHasta, filtro);
         
-        mostrarCitasAgenda(citasDemo, periodo);
+        mostrarCitasAgenda(citasReales, periodo);
         
     } catch (error) {
         console.error('❌ Error cargando citas:', error);
@@ -3631,68 +3631,68 @@ async function cargarCitasAgenda() {
     }
 }
 
-async function obtenerCitasFormspree(fechaDesde, fechaHasta, filtro) {
-    // TODO: Implementar conexión real con Formspree
-    // Por ahora devolvemos datos demo filtrados
+async function obtenerCitasDesdeSupabase(fechaDesde, fechaHasta, filtro) {
+    console.log('🔄 Cargando citas reales desde Supabase...');
     
-    console.log('🔄 Simulando carga desde Formspree...');
-    
-    // Datos de ejemplo (filtrados según el rol y filtro)
-    const citasEjemplo = [
-        {
-            fecha: '2025-01-25',
-            hora: '15:30',
-            cliente_nombre: 'Juan Pérez',
-            cliente_telefono: '+56912345678',
-            cliente_email: 'juan@email.com',
-            barbero_nombre: currentUser.nombre,
-            barbero_id: currentUser.id,
-            notas: 'Corte fade con diseño',
-            barberia_nombre: window.CURRENT_BARBERIA_DATA.nombre
-        },
-        {
-            fecha: '2025-01-26',
-            hora: '10:00',
-            cliente_nombre: 'María García',
-            cliente_telefono: '+56987654321',
-            cliente_email: 'maria@email.com',
-            barbero_nombre: 'Otro Barbero',
-            barbero_id: 'otro-id',
-            notas: 'Corte tradicional',
-            barberia_nombre: window.CURRENT_BARBERIA_DATA.nombre
-        },
-        {
-            fecha: '2025-01-27',
-            hora: '16:00',
-            cliente_nombre: 'Carlos López',
-            cliente_telefono: '+56911223344',
-            cliente_email: 'carlos@email.com',
-            barbero_nombre: currentUser.nombre,
-            barbero_id: currentUser.id,
-            notas: 'Barba premium',
-            barberia_nombre: window.CURRENT_BARBERIA_DATA.nombre
+    try {
+        // Construir query base
+        let query = supabase
+            .from('reservas')
+            .select(`
+                *,
+                usuarios!barbero_id(nombre)
+            `)
+            .eq('barberia_id', window.CURRENT_BARBERIA_ID)
+            .gte('fecha', fechaDesde)
+            .lte('fecha', fechaHasta)
+            .order('fecha', { ascending: true })
+            .order('hora', { ascending: true });
+        
+        // Aplicar filtro según rol y selección
+        if (userRole === 'empleado') {
+            // Empleado: solo SUS citas
+            query = query.eq('barbero_id', currentUser.id);
+        } else if (userRole === 'admin') {
+            // Admin: aplicar filtro seleccionado
+            if (filtro === 'mi') {
+                query = query.eq('barbero_id', currentUser.id);
+            } else if (filtro !== 'todos') {
+                query = query.eq('barbero_id', filtro);
+            }
+            // Si es 'todos', no agregar filtro (mostrar todas)
         }
-    ];
-    
-    // Filtrar según rol y selección
-    let citasFiltradas = citasEjemplo;
-    
-    if (userRole === 'empleado') {
-        // Empleado: solo SUS citas
-        citasFiltradas = citasEjemplo.filter(c => c.barbero_id === currentUser.id);
-    } else if (userRole === 'admin') {
-        // Admin: aplicar filtro seleccionado
-        if (filtro === 'mi') {
-            citasFiltradas = citasEjemplo.filter(c => c.barbero_id === currentUser.id);
-        } else if (filtro !== 'todos') {
-            citasFiltradas = citasEjemplo.filter(c => c.barbero_id === filtro);
+        
+        const { data: reservas, error } = await query;
+        
+        if (error) {
+            console.error('❌ Error cargando reservas:', error);
+            throw error;
         }
-        // Si es 'todos', no filtrar (mostrar todas)
+        
+        console.log(`✅ ${reservas?.length || 0} reservas cargadas desde Supabase`);
+        
+        // Convertir formato Supabase al formato esperado por la agenda
+        const citasFormateadas = (reservas || []).map(reserva => ({
+            fecha: reserva.fecha,
+            hora: reserva.hora,
+            cliente_nombre: reserva.cliente_nombre,
+            cliente_telefono: reserva.cliente_telefono,
+            cliente_email: reserva.cliente_email,
+            barbero_nombre: reserva.barbero_nombre,
+            barbero_id: reserva.barbero_id,
+            notas: reserva.notas,
+            barberia_nombre: window.CURRENT_BARBERIA_DATA?.nombre || 'Barbería',
+            estado: reserva.estado,
+            id: reserva.id // Para futuras acciones
+        }));
+        
+        return citasFormateadas;
+        
+    } catch (error) {
+        console.error('❌ Error crítico cargando citas:', error);
+        return []; // Devolver array vacío en caso de error
     }
-    
-    return citasFiltradas;
 }
-
 function mostrarCitasAgenda(citas, periodo) {
     const contenido = document.getElementById('contenidoAgenda');
     
