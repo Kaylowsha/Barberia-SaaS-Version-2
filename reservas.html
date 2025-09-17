@@ -673,7 +673,7 @@
         }
 
         // Inicializar EmailJS
-        emailjs.init("YOUR_PUBLIC_KEY"); // ⚠️ CAMBIAR por tu clave real
+        emailjs.init("IEVjMyCxhl0W0COei"); // Tu Public Key
 
         // Manejar envío del formulario
         document.getElementById('formReserva').addEventListener('submit', async (e) => {
@@ -809,31 +809,46 @@
 
         async function enviarEmailConfirmacion(reserva) {
             try {
+                debug('📧 Preparando email de confirmación...');
+                
+                // Formatear fecha para el email
+                const fechaFormateada = new Date(reserva.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
+                    weekday: 'long',
+                    day: 'numeric', 
+                    month: 'long',
+                    year: 'numeric'
+                });
+
+                // Parámetros para el template de EmailJS
                 const templateParams = {
                     to_email: reserva.cliente_email,
                     cliente_nombre: reserva.cliente_nombre,
                     barberia_nombre: reserva.barberia_nombre,
-                    fecha: new Date(reserva.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
-                        weekday: 'long',
-                        day: 'numeric', 
-                        month: 'long',
-                        year: 'numeric'
-                    }),
-                    hora: reserva.hora,
                     barbero_nombre: reserva.barbero_nombre,
+                    fecha_formateada: fechaFormateada,
+                    hora: reserva.hora,
+                    cliente_telefono: reserva.cliente_telefono,
                     notas: reserva.notas || 'Sin notas especiales'
                 };
 
-                debug('📧 Enviando email con datos', templateParams);
+                debug('📤 Enviando email con datos:', templateParams);
                 
-                // TODO: Configurar EmailJS real
-                // await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams);
+                // Enviar email usando EmailJS
+                const response = await emailjs.send(
+                    'service_yk46u6o',     // Service ID
+                    'template_ylwzsso',    // Template ID  
+                    templateParams
+                );
                 
-                debug('✅ Email enviado exitosamente (simulado)');
+                debug('✅ Email enviado exitosamente', response);
+                return true;
                 
             } catch (error) {
                 debug('❌ Error enviando email', error);
                 console.error('Error enviando email:', error);
+                
+                // No lanzar error - el email es opcional
+                return false;
             }
         }
 
