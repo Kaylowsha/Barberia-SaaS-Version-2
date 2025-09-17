@@ -732,13 +732,79 @@
         }
 
         async function guardarReserva(reserva) {
-            // SIMULACIÓN - Aquí iría Google Sheets
-            debug('💾 Guardando en Google Sheets (simulado)...', reserva);
+            debug('💾 Guardando reserva en Formspree...', reserva);
             
-            // Simular delay de guardado
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            debug('✅ Reserva guardada exitosamente');
+            try {
+                // Preparar datos para Formspree
+                const formData = {
+                    // Campos principales
+                    barberia_id: reserva.barberia_id,
+                    barberia_nombre: reserva.barberia_nombre,
+                    fecha: reserva.fecha,
+                    hora: reserva.hora,
+                    barbero_id: reserva.barbero_id,
+                    barbero_nombre: reserva.barbero_nombre,
+                    cliente_nombre: reserva.cliente_nombre,
+                    cliente_telefono: reserva.cliente_telefono,
+                    cliente_email: reserva.cliente_email || 'Sin email',
+                    notas: reserva.notas || 'Sin notas',
+                    timestamp: reserva.created_at,
+                    
+                    // Campo especial para email legible
+                    _subject: `Nueva Reserva: ${reserva.cliente_nombre} - ${reserva.barberia_nombre}`,
+                    
+                    // Mensaje formateado para email
+                    mensaje: `
+🎯 NUEVA RESERVA CONFIRMADA
+═══════════════════════════
+
+👤 CLIENTE: ${reserva.cliente_nombre}
+📱 TELÉFONO: ${reserva.cliente_telefono}
+📧 EMAIL: ${reserva.cliente_email || 'No proporcionado'}
+
+🏪 BARBERÍA: ${reserva.barberia_nombre}
+👨‍💼 BARBERO: ${reserva.barbero_nombre}
+
+📅 FECHA: ${new Date(reserva.fecha + 'T00:00:00').toLocaleDateString('es-CL', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    })}
+⏰ HORA: ${reserva.hora}
+
+📝 NOTAS: ${reserva.notas || 'Sin notas especiales'}
+
+🔗 BARBERÍA ID: ${reserva.barberia_id}
+⏱️ REGISTRADO: ${new Date(reserva.created_at).toLocaleString('es-CL')}
+                    `
+                };
+                
+                debug('📤 Enviando a Formspree:', formData);
+                
+                // Enviar a Formspree
+                const response = await fetch('https://formspree.io/f/xwpndlwd', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    debug('✅ Reserva enviada exitosamente a Formspree', result);
+                } else {
+                    debug('❌ Error de Formspree', result);
+                    throw new Error('Error en Formspree: ' + (result.error || 'Desconocido'));
+                }
+                
+            } catch (error) {
+                debug('❌ Error crítico guardando reserva', error);
+                throw error; // Re-lanzar para manejo en procesarReserva
+            }
         }
 
         async function enviarEmailConfirmacion(reserva) {
