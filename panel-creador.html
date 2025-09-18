@@ -155,7 +155,75 @@
             </div>
         </div>
     </div>
-
+<!-- Sección Backup Avanzado -->
+        <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg shadow border-2 border-blue-200 mt-6">
+            <div class="px-6 py-4 border-b border-blue-200 bg-gradient-to-r from-blue-500 to-green-500 text-white">
+                <h3 class="text-lg font-bold flex items-center">
+                    <i class="fas fa-download mr-2"></i>
+                    Backup y Exportación de Datos
+                </h3>
+                <p class="text-blue-100 text-sm mt-1">Exporta datos completos de cualquier barbería</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <!-- Selector Barbería -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Barbería:</label>
+                        <select id="selectBarberiaBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Seleccionar barbería...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Tipo de datos -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Incluir:</label>
+                        <select id="tipoBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="completo">📊 Backup Completo</option>
+                            <option value="usuarios">👥 Solo Usuarios</option>
+                            <option value="servicios">✂️ Solo Servicios</option>
+                            <option value="reservas">📅 Solo Reservas</option>
+                            <option value="adelantos">💰 Solo Adelantos</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Formato -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Formato:</label>
+                        <select id="formatoBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="excel">📊 Excel (.xlsx)</option>
+                            <option value="csv">📄 CSV (.csv)</option>
+                            <option value="json">🔧 JSON (.json)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Botón Exportar -->
+                    <div class="flex items-end">
+                        <button onclick="exportarBackupAvanzado()" 
+                            class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-600 font-semibold">
+                            📥 Exportar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Info adicional -->
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                        <div class="text-sm text-gray-700">
+                            <p class="font-medium mb-1">💡 Casos de uso recomendados:</p>
+                            <ul class="list-disc list-inside space-y-1 text-gray-600">
+                                <li><strong>Backup Completo:</strong> Antes de eliminar barbería</li>
+                                <li><strong>Solo Servicios:</strong> Análisis de productividad</li>
+                                <li><strong>Solo Reservas:</strong> Exportar agenda a Excel</li>
+                                <li><strong>Formato Excel:</strong> Para análisis y gráficos</li>
+                                <li><strong>Formato CSV:</strong> Para importar en otros sistemas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     <!-- Contenido de Facturación -->
 
 <div id="content-facturacion" class="tab-content hidden">
@@ -398,8 +466,13 @@
     +15 días
 </button>
 <button onclick="mostrarModalEliminar('${barberia.id}', '${barberia.nombre}')" 
-    class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 font-bold">
+    class="mr-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 font-bold">
     🗑️ Eliminar
+</button>
+<button onclick="backupRapido('${barberia.id}', '${barberia.nombre}')" 
+    class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm" 
+    title="Backup rápido">
+    📥
 </button>
                             </td>
                         </tr>
@@ -696,13 +769,312 @@ function cerrarSesion() {
                     break;
                 case 'barberias':
                     cargarBarberias();
+                    cargarBarberiasEnBackup();
                     break;
+                    
                 case 'facturacion':
                     cargarFacturacion();
                     break;
                 case 'reportes':
                      cargarReportes();
                     break;
+            }
+        }
+        // ===============================
+        // FUNCIONES BACKUP Y EXPORTACIÓN
+        // ===============================
+        
+        // Backup rápido desde card de barbería
+        async function backupRapido(barberiaId, barberiaNombre) {
+            try {
+                console.log('📥 Iniciando backup rápido para:', barberiaNombre);
+                
+                // Mostrar loading
+                const event = window.event;
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳';
+                btn.disabled = true;
+                
+                // Obtener todos los datos
+                const datosCompletos = await obtenerDatosBarberia(barberiaId);
+                
+                // Exportar como Excel
+                await exportarExcel(datosCompletos, barberiaNombre + '_backup_completo');
+                
+                // Restaurar botón
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                console.log('✅ Backup rápido completado');
+                
+            } catch (error) {
+                console.error('❌ Error en backup rápido:', error);
+                alert('❌ Error generando backup: ' + error.message);
+                
+                // Restaurar botón en caso de error
+                const btn = event.target;
+                btn.innerHTML = '📥';
+                btn.disabled = false;
+            }
+        }
+        
+        // Backup avanzado con opciones
+        async function exportarBackupAvanzado() {
+            try {
+                const barberiaId = document.getElementById('selectBarberiaBackup').value;
+                const tipoBackup = document.getElementById('tipoBackup').value;
+                const formato = document.getElementById('formatoBackup').value;
+                
+                if (!barberiaId) {
+                    alert('⚠️ Por favor selecciona una barbería');
+                    return;
+                }
+                
+                console.log('📊 Iniciando backup avanzado:', { barberiaId, tipoBackup, formato });
+                
+                // Obtener nombre de barbería
+                const { data: barberia } = await supabase
+                    .from('barberias')
+                    .select('nombre')
+                    .eq('id', barberiaId)
+                    .single();
+                
+                const barberiaNombre = barberia?.nombre || 'Barberia';
+                
+                // Obtener datos según tipo seleccionado
+                let datos;
+                let nombreArchivo;
+                
+                switch(tipoBackup) {
+                    case 'completo':
+                        datos = await obtenerDatosBarberia(barberiaId);
+                        nombreArchivo = `${barberiaNombre}_backup_completo`;
+                        break;
+                    case 'usuarios':
+                        datos = { usuarios: await obtenerUsuarios(barberiaId) };
+                        nombreArchivo = `${barberiaNombre}_usuarios`;
+                        break;
+                    case 'servicios':
+                        datos = { servicios: await obtenerServicios(barberiaId) };
+                        nombreArchivo = `${barberiaNombre}_servicios`;
+                        break;
+                    case 'reservas':
+                        datos = { reservas: await obtenerReservas(barberiaId) };
+                        nombreArchivo = `${barberiaNombre}_reservas`;
+                        break;
+                    case 'adelantos':
+                        datos = { adelantos: await obtenerAdelantos(barberiaId) };
+                        nombreArchivo = `${barberiaNombre}_adelantos`;
+                        break;
+                    default:
+                        throw new Error('Tipo de backup no válido');
+                }
+                
+                // Exportar según formato
+                switch(formato) {
+                    case 'excel':
+                        await exportarExcel(datos, nombreArchivo);
+                        break;
+                    case 'csv':
+                        await exportarCSV(datos, nombreArchivo);
+                        break;
+                    case 'json':
+                        await exportarJSON(datos, nombreArchivo);
+                        break;
+                    default:
+                        throw new Error('Formato no válido');
+                }
+                
+                console.log('✅ Backup avanzado completado');
+                
+            } catch (error) {
+                console.error('❌ Error en backup avanzado:', error);
+                alert('❌ Error generando backup: ' + error.message);
+            }
+        }
+        
+        // Obtener todos los datos de una barbería
+        async function obtenerDatosBarberia(barberiaId) {
+            console.log('📊 Recopilando datos completos...');
+            
+            const [barberia, usuarios, servicios, reservas, adelantos] = await Promise.all([
+                obtenerInfoBarberia(barberiaId),
+                obtenerUsuarios(barberiaId),
+                obtenerServicios(barberiaId),
+                obtenerReservas(barberiaId),
+                obtenerAdelantos(barberiaId)
+            ]);
+            
+            return {
+                barberia,
+                usuarios,
+                servicios,
+                reservas,
+                adelantos,
+                metadata: {
+                    fecha_backup: new Date().toISOString(),
+                    total_registros: usuarios.length + servicios.length + reservas.length + adelantos.length
+                }
+            };
+        }
+        
+        // Funciones auxiliares para obtener datos
+        async function obtenerInfoBarberia(barberiaId) {
+            const { data } = await supabase
+                .from('barberias')
+                .select('*')
+                .eq('id', barberiaId)
+                .single();
+            return data;
+        }
+        
+        async function obtenerUsuarios(barberiaId) {
+            const { data } = await supabase
+                .from('usuarios')
+                .select('*')
+                .eq('barberia_id', barberiaId);
+            return data || [];
+        }
+        
+        async function obtenerServicios(barberiaId) {
+            const { data } = await supabase
+                .from('citas')
+                .select('*')
+                .eq('barberia_id', barberiaId);
+            return data || [];
+        }
+        
+        async function obtenerReservas(barberiaId) {
+            const { data } = await supabase
+                .from('reservas')
+                .select('*')
+                .eq('barberia_id', barberiaId);
+            return data || [];
+        }
+        
+        async function obtenerAdelantos(barberiaId) {
+            const { data } = await supabase
+                .from('adelantos')
+                .select('*')
+                .eq('barberia_id', barberiaId);
+            return data || [];
+        }
+        
+        // Funciones de exportación
+        async function exportarExcel(datos, nombreArchivo) {
+            console.log('📊 Generando archivo Excel...');
+            
+            // Crear contenido Excel simple (CSV con separador de tabulación)
+            let contenido = '';
+            
+            Object.keys(datos).forEach(tabla => {
+                if (Array.isArray(datos[tabla])) {
+                    contenido += `\n=== ${tabla.toUpperCase()} ===\n`;
+                    
+                    if (datos[tabla].length > 0) {
+                        // Headers
+                        const headers = Object.keys(datos[tabla][0]);
+                        contenido += headers.join('\t') + '\n';
+                        
+                        // Datos
+                        datos[tabla].forEach(fila => {
+                            const valores = headers.map(header => {
+                                let valor = fila[header] || '';
+                                // Limpiar datos para Excel
+                                if (typeof valor === 'string') {
+                                    valor = valor.replace(/\t/g, ' ').replace(/\n/g, ' ');
+                                }
+                                return valor;
+                            });
+                            contenido += valores.join('\t') + '\n';
+                        });
+                    } else {
+                        contenido += 'Sin datos\n';
+                    }
+                    contenido += '\n';
+                }
+            });
+            
+            // Descargar archivo
+            descargarArchivo(contenido, nombreArchivo + '.xls', 'application/vnd.ms-excel');
+        }
+        
+        async function exportarCSV(datos, nombreArchivo) {
+            console.log('📄 Generando archivo CSV...');
+            
+            let contenido = '';
+            
+            Object.keys(datos).forEach(tabla => {
+                if (Array.isArray(datos[tabla]) && datos[tabla].length > 0) {
+                    contenido += `\n=== ${tabla.toUpperCase()} ===\n`;
+                    
+                    // Headers
+                    const headers = Object.keys(datos[tabla][0]);
+                    contenido += headers.join(',') + '\n';
+                    
+                    // Datos
+                    datos[tabla].forEach(fila => {
+                        const valores = headers.map(header => {
+                            let valor = fila[header] || '';
+                            // Escapar comas y comillas para CSV
+                            if (typeof valor === 'string' && (valor.includes(',') || valor.includes('"'))) {
+                                valor = '"' + valor.replace(/"/g, '""') + '"';
+                            }
+                            return valor;
+                        });
+                        contenido += valores.join(',') + '\n';
+                    });
+                    contenido += '\n';
+                }
+            });
+            
+            descargarArchivo(contenido, nombreArchivo + '.csv', 'text/csv');
+        }
+        
+        async function exportarJSON(datos, nombreArchivo) {
+            console.log('🔧 Generando archivo JSON...');
+            
+            const contenido = JSON.stringify(datos, null, 2);
+            descargarArchivo(contenido, nombreArchivo + '.json', 'application/json');
+        }
+        
+        // Función auxiliar para descargar archivos
+        function descargarArchivo(contenido, nombreArchivo, tipoMime) {
+            const blob = new Blob([contenido], { type: tipoMime });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = nombreArchivo;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            console.log('✅ Archivo descargado:', nombreArchivo);
+        }
+        
+        // Cargar barberías en selector de backup
+        async function cargarBarberiasEnBackup() {
+            try {
+                const { data: barberias } = await supabase
+                    .from('barberias')
+                    .select('id, nombre')
+                    .order('nombre', { ascending: true });
+                
+                const select = document.getElementById('selectBarberiaBackup');
+                select.innerHTML = '<option value="">Seleccionar barbería...</option>';
+                
+                if (barberias) {
+                    barberias.forEach(barberia => {
+                        const option = document.createElement('option');
+                        option.value = barberia.id;
+                        option.textContent = barberia.nombre;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Error cargando barberías para backup:', error);
             }
         }
         // ===============================
