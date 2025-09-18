@@ -239,7 +239,48 @@
         </div>
     </div>
 </div>
-
+<!-- Modal Eliminar Barbería -->
+<div id="modalEliminarBarberia" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-red-600">⚠️ Eliminar Barbería</h3>
+            <button onclick="cerrarModalEliminar()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div id="resumenEliminacion" class="mb-6">
+            <!-- Se llenará dinámicamente -->
+        </div>
+        
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div class="flex items-start">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-2 mt-1"></i>
+                <div class="text-sm text-red-700">
+                    <strong>Esta acción NO se puede deshacer.</strong><br>
+                    Todos los datos se eliminarán permanentemente.
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex space-x-3">
+            <button onclick="cerrarModalEliminar()" 
+                class="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600">
+                Cancelar
+            </button>
+            <button onclick="confirmarEliminacion()" 
+                class="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 font-bold">
+                🗑️ Sí, eliminar todo
+            </button>
+        </div>
+        
+        <!-- Loading durante eliminación -->
+        <div id="loadingEliminacion" class="hidden mt-4 text-center">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-red-600"></div>
+            <p class="text-sm text-gray-600 mt-2">Eliminando datos...</p>
+        </div>
+    </div>
+</div>
     <!-- Modal Nueva Barbería -->
     <div id="modalNuevaBarberia" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -348,14 +389,18 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm">${trialHasta}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">${count || 0} usuarios</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <button onclick="toggleBarberia('${barberia.id}', ${barberia.activa})" 
-                                    class="mr-2 px-3 py-1 ${barberia.activa ? 'bg-red-500' : 'bg-green-500'} text-white rounded hover:opacity-80">
-                                    ${barberia.activa ? 'Desactivar' : 'Activar'}
-                                </button>
-                                <button onclick="extenderTrial('${barberia.id}')" 
-                                    class="px-3 py-1 bg-blue-500 text-white rounded hover:opacity-80">
-                                    +15 días
-                                </button>
+                               <button onclick="toggleBarberia('${barberia.id}', ${barberia.activa})" 
+    class="mr-2 px-3 py-1 ${barberia.activa ? 'bg-red-500' : 'bg-green-500'} text-white rounded hover:opacity-80">
+    ${barberia.activa ? 'Desactivar' : 'Activar'}
+</button>
+<button onclick="extenderTrial('${barberia.id}')" 
+    class="mr-2 px-3 py-1 bg-blue-500 text-white rounded hover:opacity-80">
+    +15 días
+</button>
+<button onclick="mostrarModalEliminar('${barberia.id}', '${barberia.nombre}')" 
+    class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 font-bold">
+    🗑️ Eliminar
+</button>
                             </td>
                         </tr>
                     `;
@@ -658,6 +703,179 @@ function cerrarSesion() {
                 case 'reportes':
                      cargarReportes();
                     break;
+            }
+        }
+        // ===============================
+        // FUNCIONES ELIMINAR BARBERÍA COMPLETA
+        // ===============================
+        
+        let barberiaAEliminar = null;
+        
+        async function mostrarModalEliminar(barberiaId, barberiaNombre) {
+            console.log('🗑️ Preparando eliminación de:', barberiaNombre);
+            barberiaAEliminar = { id: barberiaId, nombre: barberiaNombre };
+            
+            // Mostrar loading en resumen
+            document.getElementById('resumenEliminacion').innerHTML = `
+                <div class="text-center py-4">
+                    <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <p class="text-sm text-gray-600 mt-2">Analizando datos...</p>
+                </div>
+            `;
+            
+            // Mostrar modal
+            document.getElementById('modalEliminarBarberia').classList.remove('hidden');
+            
+            // Cargar resumen de datos
+            await cargarResumenEliminacion(barberiaId, barberiaNombre);
+        }
+        
+        async function cargarResumenEliminacion(barberiaId, barberiaNombre) {
+            try {
+                // Contar usuarios
+                const { count: usuarios } = await supabase
+                    .from('usuarios')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('barberia_id', barberiaId);
+                
+                // Contar citas
+                const { count: citas } = await supabase
+                    .from('citas')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('barberia_id', barberiaId);
+                
+                // Contar adelantos
+                const { count: adelantos } = await supabase
+                    .from('adelantos')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('barberia_id', barberiaId);
+                
+                // Contar reservas
+                const { count: reservas } = await supabase
+                    .from('reservas')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('barberia_id', barberiaId);
+                
+                // Mostrar resumen
+                document.getElementById('resumenEliminacion').innerHTML = `
+                    <div class="space-y-3">
+                        <div class="text-center mb-4">
+                            <h4 class="font-bold text-lg text-gray-800">"${barberiaNombre}"</h4>
+                            <p class="text-sm text-gray-600">ID: ${barberiaId.substring(0, 8)}...</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-700">👥 Usuarios:</span>
+                                <span class="font-semibold">${usuarios || 0}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-700">✂️ Servicios registrados:</span>
+                                <span class="font-semibold">${citas || 0}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-700">💰 Adelantos:</span>
+                                <span class="font-semibold">${adelantos || 0}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-700">📅 Reservas:</span>
+                                <span class="font-semibold">${reservas || 0}</span>
+                            </div>
+                            <hr class="my-2">
+                            <div class="flex justify-between font-bold text-red-600">
+                                <span>📊 Total registros:</span>
+                                <span>${(usuarios || 0) + (citas || 0) + (adelantos || 0) + (reservas || 0) + 1}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('❌ Error cargando resumen:', error);
+                document.getElementById('resumenEliminacion').innerHTML = `
+                    <div class="text-red-600 text-center">
+                        ❌ Error cargando datos
+                    </div>
+                `;
+            }
+        }
+        
+        function cerrarModalEliminar() {
+            document.getElementById('modalEliminarBarberia').classList.add('hidden');
+            barberiaAEliminar = null;
+        }
+        
+        async function confirmarEliminacion() {
+            if (!barberiaAEliminar) return;
+            
+            // Mostrar loading
+            document.getElementById('loadingEliminacion').classList.remove('hidden');
+            
+            try {
+                console.log('🗑️ Iniciando eliminación cascada para:', barberiaAEliminar.nombre);
+                
+                const barberiaId = barberiaAEliminar.id;
+                
+                // PASO 1: Eliminar reservas
+                console.log('🔄 Eliminando reservas...');
+                const { error: errorReservas } = await supabase
+                    .from('reservas')
+                    .delete()
+                    .eq('barberia_id', barberiaId);
+                
+                if (errorReservas) throw new Error('Error eliminando reservas: ' + errorReservas.message);
+                
+                // PASO 2: Eliminar adelantos
+                console.log('🔄 Eliminando adelantos...');
+                const { error: errorAdelantos } = await supabase
+                    .from('adelantos')
+                    .delete()
+                    .eq('barberia_id', barberiaId);
+                
+                if (errorAdelantos) throw new Error('Error eliminando adelantos: ' + errorAdelantos.message);
+                
+                // PASO 3: Eliminar citas
+                console.log('🔄 Eliminando citas...');
+                const { error: errorCitas } = await supabase
+                    .from('citas')
+                    .delete()
+                    .eq('barberia_id', barberiaId);
+                
+                if (errorCitas) throw new Error('Error eliminando citas: ' + errorCitas.message);
+                
+                // PASO 4: Eliminar usuarios
+                console.log('🔄 Eliminando usuarios...');
+                const { error: errorUsuarios } = await supabase
+                    .from('usuarios')
+                    .delete()
+                    .eq('barberia_id', barberiaId);
+                
+                if (errorUsuarios) throw new Error('Error eliminando usuarios: ' + errorUsuarios.message);
+                
+                // PASO 5: Eliminar barbería
+                console.log('🔄 Eliminando barbería...');
+                const { error: errorBarberia } = await supabase
+                    .from('barberias')
+                    .delete()
+                    .eq('id', barberiaId);
+                
+                if (errorBarberia) throw new Error('Error eliminando barbería: ' + errorBarberia.message);
+                
+                console.log('✅ Eliminación cascada completada exitosamente');
+                
+                // Éxito
+                alert(`✅ Barbería "${barberiaAEliminar.nombre}" eliminada completamente.\n\nTodos los datos han sido removidos de la base de datos.`);
+                
+                // Cerrar modal y recargar datos
+                cerrarModalEliminar();
+                cargarBarberias();
+                cargarMetricas();
+                
+            } catch (error) {
+                console.error('❌ Error en eliminación:', error);
+                alert('❌ Error eliminando barbería: ' + error.message);
+            } finally {
+                document.getElementById('loadingEliminacion').classList.add('hidden');
             }
         }
         // ========== FIN DEL CÓDIGO NUEVO ==========
