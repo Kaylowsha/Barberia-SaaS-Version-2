@@ -155,75 +155,7 @@
             </div>
         </div>
     </div>
-<!-- Sección Backup Avanzado -->
-        <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg shadow border-2 border-blue-200 mt-6">
-            <div class="px-6 py-4 border-b border-blue-200 bg-gradient-to-r from-blue-500 to-green-500 text-white">
-                <h3 class="text-lg font-bold flex items-center">
-                    <i class="fas fa-download mr-2"></i>
-                    Backup y Exportación de Datos
-                </h3>
-                <p class="text-blue-100 text-sm mt-1">Exporta datos completos de cualquier barbería</p>
-            </div>
-            
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <!-- Selector Barbería -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Barbería:</label>
-                        <select id="selectBarberiaBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                            <option value="">Seleccionar barbería...</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Tipo de datos -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Incluir:</label>
-                        <select id="tipoBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                            <option value="completo">📊 Backup Completo</option>
-                            <option value="usuarios">👥 Solo Usuarios</option>
-                            <option value="servicios">✂️ Solo Servicios</option>
-                            <option value="reservas">📅 Solo Reservas</option>
-                            <option value="adelantos">💰 Solo Adelantos</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Formato -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Formato:</label>
-                        <select id="formatoBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                            <option value="excel">📊 Excel (.xlsx)</option>
-                            <option value="csv">📄 CSV (.csv)</option>
-                            <option value="json">🔧 JSON (.json)</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Botón Exportar -->
-                    <div class="flex items-end">
-                        <button onclick="exportarBackupAvanzado()" 
-                            class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-600 font-semibold">
-                            📥 Exportar
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Info adicional -->
-                <div class="bg-white rounded-lg p-4 border border-gray-200">
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-info-circle text-blue-500 mt-1"></i>
-                        <div class="text-sm text-gray-700">
-                            <p class="font-medium mb-1">💡 Casos de uso recomendados:</p>
-                            <ul class="list-disc list-inside space-y-1 text-gray-600">
-                                <li><strong>Backup Completo:</strong> Antes de eliminar barbería</li>
-                                <li><strong>Solo Servicios:</strong> Análisis de productividad</li>
-                                <li><strong>Solo Reservas:</strong> Exportar agenda a Excel</li>
-                                <li><strong>Formato Excel:</strong> Para análisis y gráficos</li>
-                                <li><strong>Formato CSV:</strong> Para importar en otros sistemas</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
     <!-- Contenido de Facturación -->
 
 <div id="content-facturacion" class="tab-content hidden">
@@ -306,6 +238,75 @@
             <!-- Se llenará dinámicamente -->
         </div>
     </div>
+    <!-- Sección Backup Avanzado -->
+        <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg shadow border-2 border-blue-200 mt-6">
+            <div class="px-6 py-4 border-b border-blue-200 bg-gradient-to-r from-blue-500 to-green-500 text-white">
+                <h3 class="text-lg font-bold flex items-center">
+                    <i class="fas fa-download mr-2"></i>
+                    Backup y Exportación de Datos
+                </h3>
+                <p class="text-blue-100 text-sm mt-1">Exporta datos completos de cualquier barbería</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                    <!-- Selector Barbería -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Barbería:</label>
+                        <select id="selectBarberiaBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="">Seleccionar barbería...</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Tipo de datos -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Incluir:</label>
+                        <select id="tipoBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="completo">📊 Backup Completo</option>
+                            <option value="usuarios">👥 Solo Usuarios</option>
+                            <option value="servicios">✂️ Solo Servicios</option>
+                            <option value="reservas">📅 Solo Reservas</option>
+                            <option value="adelantos">💰 Solo Adelantos</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Formato -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Formato:</label>
+                        <select id="formatoBackup" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="excel">📊 Excel (.xlsx)</option>
+                            <option value="csv">📄 CSV (.csv)</option>
+                            <option value="json">🔧 JSON (.json)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Botón Exportar -->
+                    <div class="flex items-end">
+                        <button onclick="exportarBackupAvanzado()" 
+                            class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-600 font-semibold">
+                            📥 Exportar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Info adicional -->
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                        <div class="text-sm text-gray-700">
+                            <p class="font-medium mb-1">💡 Casos de uso recomendados:</p>
+                            <ul class="list-disc list-inside space-y-1 text-gray-600">
+                                <li><strong>Backup Completo:</strong> Antes de eliminar barbería</li>
+                                <li><strong>Solo Servicios:</strong> Análisis de productividad</li>
+                                <li><strong>Solo Reservas:</strong> Exportar agenda a Excel</li>
+                                <li><strong>Formato Excel:</strong> Para análisis y gráficos</li>
+                                <li><strong>Formato CSV:</strong> Para importar en otros sistemas</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 </div>
 <!-- Modal Eliminar Barbería -->
 <div id="modalEliminarBarberia" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -769,7 +770,6 @@ function cerrarSesion() {
                     break;
                 case 'barberias':
                     cargarBarberias();
-                    cargarBarberiasEnBackup();
                     break;
                     
                 case 'facturacion':
@@ -777,6 +777,7 @@ function cerrarSesion() {
                     break;
                 case 'reportes':
                      cargarReportes();
+                    cargarBarberiasEnBackup();
                     break;
             }
         }
