@@ -3533,8 +3533,17 @@ function loadAgenda() {
         cargarBarberosEnFiltroAgenda();
     }
     
-    // Cargar citas
+   // Cargar citas inicial
+cargarCitasAgenda();
+
+// Auto-refresh cada 30 segundos
+if (window.agendaInterval) {
+    clearInterval(window.agendaInterval);
+}
+window.agendaInterval = setInterval(() => {
+    console.log('🔄 Auto-refresh agenda...');
     cargarCitasAgenda();
+}, 30000); // 30 segundos
 }
 
 async function cargarBarberosEnFiltroAgenda() {
