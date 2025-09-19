@@ -1821,7 +1821,7 @@ function calcularProyeccionIA() {
     document.getElementById('explicacionProyeccionIA').textContent = 
         `Basado en ${Math.round(serviciosPorDia)} servicios/día × $${ticketPromedio.toLocaleString('es-CL')} ticket promedio`;
     // Generar conclusiones
-    generarConclusiones();
+
 }
 
 function mostrarSinDatosIA() {
@@ -2207,6 +2207,7 @@ function generarPlanAccion() {
     
     document.getElementById('planAccion').innerHTML = htmlPlan;
 }
+        
 function cerrarModalIA() {
     document.getElementById('modalConsultorIA').classList.add('hidden');
 }
