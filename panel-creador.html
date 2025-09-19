@@ -1470,6 +1470,7 @@ function generarAnalisisCompleto() {
 function calcularSaludIA() {
     const { servicios } = datosAnalisisIA;
     
+    // Calcular métricas (UNA SOLA VEZ)
     const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
     const ticketPromedio = Math.round(totalIngresos / servicios.length);
     const serviciosPorDia = Math.round(servicios.length / 30);
@@ -1515,10 +1516,8 @@ function calcularSaludIA() {
     document.getElementById('puntajeSaludIA').textContent = `${puntos}/100`;
     document.getElementById('puntajeSaludIA').className = `text-5xl font-bold mb-3 ${color}`;
     document.getElementById('mensajeSaludIA').textContent = mensaje;
-    // Llenar métricas del PDF
-    const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
-    const ticketPromedio = Math.round(totalIngresos / servicios.length);
     
+    // Llenar métricas del PDF (REUTILIZANDO las variables ya calculadas)
     document.getElementById('totalServiciosPDF').textContent = servicios.length;
     document.getElementById('totalIngresosPDF').textContent = `$${totalIngresos.toLocaleString('es-CL')}`;
     document.getElementById('ticketPromedioPDF').textContent = `$${ticketPromedio.toLocaleString('es-CL')}`;
