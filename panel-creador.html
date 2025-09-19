@@ -1605,15 +1605,21 @@ function cerrarModalIA() {
 function descargarInformePDF() {
     const { barberiaNombre, servicios } = datosAnalisisIA;
     
+    // Validar que hay datos
+    if (!servicios || servicios.length === 0) {
+        alert('⚠️ No hay datos suficientes para generar el informe.\n\nEsta barbería necesita tener servicios registrados en los últimos 30 días.');
+        return;
+    }
+    
     if (!window.jspdf) {
-        alert('❌ Error: Librería PDF no cargada');
+        alert('❌ Error: Librería PDF no cargada correctamente.');
         return;
     }
     
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    // Título
+    // ===== ENCABEZADO =====
     doc.setFontSize(24);
     doc.setTextColor(147, 51, 234); // Purple
     doc.text('CONSULTOR IA', 20, 20);
@@ -1622,91 +1628,154 @@ function descargarInformePDF() {
     doc.setTextColor(0, 0, 0);
     doc.text(barberiaNombre, 20, 35);
     
-    // Fecha
     doc.setFontSize(12);
     doc.setTextColor(100, 100, 100);
     doc.text(`Fecha: ${new Date().toLocaleDateString('es-CL')}`, 20, 45);
+    doc.text(`Periodo analizado: Ultimos 30 dias`, 20, 52);
     
-    // Salud del Negocio
+    // ===== LÍNEA SEPARADORA =====
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 58, 190, 58);
+    
+    // ===== SALUD DEL NEGOCIO =====
     const salud = document.getElementById('puntajeSaludIA').textContent;
     const mensajeSalud = document.getElementById('mensajeSaludIA').textContent;
     
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
-    doc.text('SALUD DEL NEGOCIO', 20, 60);
-    doc.setFontSize(14);
-    doc.text(`Puntuacion: ${salud}`, 20, 70);
-    doc.setFontSize(12);
-    doc.text(mensajeSalud, 20, 80);
+    doc.text('SALUD DEL NEGOCIO', 20, 70);
     
-    // Recomendaciones
+    doc.setFontSize(28);
+    doc.setTextColor(147, 51, 234);
+    doc.text(salud, 20, 85);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(mensajeSalud, 20, 95);
+    
+    // ===== MÉTRICAS BÁSICAS =====
+    const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+    const ticketPromedio = Math.round(totalIngresos / servicios.length);
+    const serviciosPorDia = Math.round(servicios.length / 30);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Total servicios: ${servicios.length}`, 20, 105);
+    doc.text(`Ingresos totales: $${totalIngresos.toLocaleString('es-CL')}`, 20, 112);
+    doc.text(`Ticket promedio: $${ticketPromedio.toLocaleString('es-CL')}`, 20, 119);
+    doc.text(`Servicios/dia: ${serviciosPorDia}`, 20, 126);
+    
+    // ===== LÍNEA SEPARADORA =====
+    doc.line(20, 132, 190, 132);
+    
+    // ===== RECOMENDACIONES =====
     const recomendaciones = document.querySelectorAll('#recomendacionesIA > div');
-    let y = 95;
+    let y = 145;
     
     doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
     doc.text('RECOMENDACIONES PRINCIPALES', 20, y);
-    y += 10;
+    y += 12;
     
-    recomendaciones.forEach((rec, i) => {
-        if (y > 250) {
-            doc.addPage();
-            y = 20;
-        }
-        
-        const titulo = rec.querySelector('h5').textContent;
-        const problema = rec.querySelectorAll('p')[0].textContent;
-        const solucion = rec.querySelectorAll('p')[1].textContent;
-        const impacto = rec.querySelectorAll('p')[2].textContent;
-        
-        doc.setFontSize(14);
-        doc.setTextColor(147, 51, 234);
-        doc.text(titulo, 20, y);
-        y += 8;
-        
-        doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-        doc.text(problema, 20, y, { maxWidth: 170 });
-        y += 8;
-        
-        doc.text(solucion, 20, y, { maxWidth: 170 });
-        y += 8;
-        
-        doc.setTextColor(34, 197, 94); // Green
-        doc.text(impacto, 20, y);
-        y += 15;
-        
-        doc.setTextColor(0, 0, 0);
-    });
+    if (recomendaciones.length === 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(100, 100, 100);
+        doc.text('No hay recomendaciones urgentes - Todo va bien!', 20, y);
+        y += 20;
+    } else {
+        recomendaciones.forEach((rec, i) => {
+            if (y > 250) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            const titulo = rec.querySelector('h5')?.textContent || `Recomendacion ${i + 1}`;
+            const textos = rec.querySelectorAll('p');
+            const problema = textos[0]?.textContent || '';
+            const solucion = textos[1]?.textContent || '';
+            const impacto = textos[2]?.textContent || '';
+            
+            // Título
+            doc.setFontSize(14);
+            doc.setTextColor(147, 51, 234);
+            doc.text(titulo, 20, y);
+            y += 8;
+            
+            // Problema
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            if (problema) {
+                const problemaLines = doc.splitTextToSize(problema, 170);
+                doc.text(problemaLines, 20, y);
+                y += (problemaLines.length * 6);
+            }
+            
+            // Solución
+            if (solucion) {
+                const solucionLines = doc.splitTextToSize(solucion, 170);
+                doc.text(solucionLines, 20, y);
+                y += (solucionLines.length * 6);
+            }
+            
+            // Impacto
+            doc.setTextColor(34, 197, 94); // Green
+            if (impacto) {
+                doc.text(impacto, 20, y);
+                y += 8;
+            }
+            
+            // Espacio entre recomendaciones
+            y += 10;
+            doc.setTextColor(0, 0, 0);
+        });
+    }
     
-    // Proyección
+    // ===== PROYECCIÓN =====
     if (y > 220) {
         doc.addPage();
         y = 20;
     }
+    
+    // Línea separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, y, 190, y);
+    y += 12;
     
     const proyeccion = document.getElementById('proyeccionIA').textContent;
     const meta = document.getElementById('metaIA').textContent;
     const explicacion = document.getElementById('explicacionProyeccionIA').textContent;
     
     doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
     doc.text('PROYECCION PROXIMO MES', 20, y);
-    y += 10;
+    y += 12;
     
     doc.setFontSize(14);
+    doc.setTextColor(34, 197, 94);
     doc.text(`Proyeccion: ${proyeccion}`, 20, y);
-    y += 8;
-    doc.text(`Meta Sugerida: ${meta}`, 20, y);
-    y += 8;
+    y += 10;
+    
+    doc.setTextColor(147, 51, 234);
+    doc.text(`Meta sugerida: ${meta}`, 20, y);
+    y += 12;
     
     doc.setFontSize(11);
     doc.setTextColor(100, 100, 100);
-    doc.text(explicacion, 20, y);
+    if (explicacion) {
+        const explicacionLines = doc.splitTextToSize(explicacion, 170);
+        doc.text(explicacionLines, 20, y);
+    }
     
-    // Descargar
+    // ===== PIE DE PÁGINA =====
+    doc.setFontSize(10);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Generado por Consultor IA - Sistema Barberia SaaS', 20, 280);
+    
+    // ===== DESCARGAR =====
     const fecha = new Date().toISOString().split('T')[0];
-    doc.save(`informe-ia-${barberiaNombre}-${fecha}.pdf`);
+    doc.save(`informe-ia-${barberiaNombre.replace(/\s+/g, '-')}-${fecha}.pdf`);
     
-    console.log('📥 PDF generado y descargado');
+    console.log('✅ PDF generado y descargado exitosamente');
 }
         // ========== FIN DEL CÓDIGO NUEVO ==========
  
