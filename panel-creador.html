@@ -1810,7 +1810,7 @@ function calcularProyeccionIA() {
     const { servicios } = datosAnalisisIA;
     
     const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
-    const serviciosPorDia = servicios.length / 30;
+    const serviciosPorDia = (servicios.length / 30).toFixed(1); // Muestra 1 decimal
     const ticketPromedio = Math.round(totalIngresos / servicios.length);
     
     const proyeccion = Math.round(serviciosPorDia * 30 * ticketPromedio);
@@ -1819,8 +1819,7 @@ function calcularProyeccionIA() {
     document.getElementById('proyeccionIA').textContent = `$${proyeccion.toLocaleString('es-CL')}`;
     document.getElementById('metaIA').textContent = `$${meta.toLocaleString('es-CL')}`;
     document.getElementById('explicacionProyeccionIA').textContent = 
-        `Basado en ${Math.round(serviciosPorDia)} servicios/día × $${ticketPromedio.toLocaleString('es-CL')} ticket promedio`;
-    // Generar conclusiones
+    `Basado en ${serviciosPorDia} servicios/día × $${ticketPromedio.toLocaleString('es-CL')} ticket promedio`;
 
 }
 
