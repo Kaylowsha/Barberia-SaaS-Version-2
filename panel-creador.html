@@ -1652,7 +1652,7 @@ function calcularSaludIA() {
     // Calcular métricas (UNA SOLA VEZ)
     const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
     const ticketPromedio = Math.round(totalIngresos / servicios.length);
-    const serviciosPorDia = Math.round(servicios.length / 30);
+    const serviciosPorDia = (servicios.length / 30).toFixed(1);
     
     let puntos = 0;
     
