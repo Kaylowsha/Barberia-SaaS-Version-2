@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <!-- jsPDF para generar PDFs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
@@ -385,7 +387,90 @@
         </div>
     </div>
 </div>
+        <!-- Modal Consultor IA -->
+<div id="modalConsultorIA" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-6 rounded-t-lg">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-2xl font-bold flex items-center">
+                        <i class="fas fa-brain mr-3"></i>
+                        Consultor IA
+                    </h3>
+                    <p id="nombreBarberiaIA" class="text-purple-100 mt-1"></p>
+                </div>
+                <button onclick="cerrarModalIA()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <!-- Loading -->
+            <div id="loadingIA" class="text-center py-12">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+                <p class="text-gray-600">Analizando datos...</p>
+            </div>
+            
+            <!-- Contenido del Análisis -->
+            <div id="contenidoIA" class="hidden">
+                <!-- Salud del Negocio -->
+                <div class="bg-white rounded-lg p-6 mb-6 shadow-lg border-2 border-gray-200">
+                    <h4 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-heartbeat text-red-500 mr-3"></i>
+                        Salud del Negocio
+                    </h4>
+                    <div class="text-center">
+                        <div id="emojiSaludIA" class="text-6xl mb-3">🟡</div>
+                        <div id="puntajeSaludIA" class="text-5xl font-bold text-gray-800 mb-3">--/100</div>
+                        <div id="mensajeSaludIA" class="text-lg text-gray-600"></div>
+                    </div>
+                </div>
+                
+                <!-- Recomendaciones -->
+                <div class="mb-6">
+                    <h4 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-3"></i>
+                        Recomendaciones Prioritarias
+                    </h4>
+                    <div id="recomendacionesIA" class="space-y-4">
+                        <!-- Se llenarán dinámicamente -->
+                    </div>
+                </div>
+                
+                <!-- Proyección -->
+                <div class="bg-gradient-to-r from-green-400 to-green-500 text-white rounded-lg p-6 shadow-lg">
+                    <h4 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        Predicción Próximo Mes
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <p class="text-sm opacity-90 mb-2">Proyección:</p>
+                            <p id="proyeccionIA" class="text-3xl font-bold">$--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm opacity-90 mb-2">Meta Sugerida:</p>
+                            <p id="metaIA" class="text-3xl font-bold">$--</p>
+                        </div>
+                    </div>
+                    <p id="explicacionProyeccionIA" class="text-sm mt-4 opacity-90 text-center"></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer con botón descargar -->
+        <div class="sticky bottom-0 bg-gray-50 p-6 rounded-b-lg border-t">
+            <button onclick="descargarInformePDF()" 
+                class="w-full bg-purple-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-purple-700 shadow-lg flex items-center justify-center">
+                <i class="fas fa-download mr-3"></i>
+                Descargar Informe Completo (PDF)
+            </button>
+        </div>
+    </div>
+</div>
     <script>
+        
         // Configuración Supabase
         const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
 
@@ -474,6 +559,11 @@
     class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm" 
     title="Backup rápido">
     📥
+</button>
+<button onclick="mostrarConsultorIA('${barberia.id}', '${barberia.nombre}')" 
+    class="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm" 
+    title="Consultor IA">
+    📊
 </button>
                             </td>
                         </tr>
@@ -1251,6 +1341,373 @@ function cerrarSesion() {
                 document.getElementById('loadingEliminacion').classList.add('hidden');
             }
         }
+        // ===============================
+// CONSULTOR IA - FUNCIONES
+// ===============================
+
+let datosAnalisisIA = {
+    barberiaId: null,
+    barberiaNombre: null,
+    servicios: [],
+    barberos: [],
+    adelantos: []
+};
+
+async function mostrarConsultorIA(barberiaId, barberiaNombre) {
+    console.log('📊 Abriendo Consultor IA para:', barberiaNombre);
+    
+    // Mostrar modal
+    document.getElementById('modalConsultorIA').classList.remove('hidden');
+    document.getElementById('nombreBarberiaIA').textContent = barberiaNombre;
+    document.getElementById('loadingIA').classList.remove('hidden');
+    document.getElementById('contenidoIA').classList.add('hidden');
+    
+    // Guardar datos
+    datosAnalisisIA.barberiaId = barberiaId;
+    datosAnalisisIA.barberiaNombre = barberiaNombre;
+    
+    try {
+        // Cargar datos de últimos 30 días
+        const hace30Dias = new Date();
+        hace30Dias.setDate(hace30Dias.getDate() - 30);
+        const fechaInicio = hace30Dias.toISOString().split('T')[0];
+        
+        // Cargar servicios
+        const { data: servicios, error: errorServicios } = await supabase
+            .from('citas')
+            .select('*')
+            .eq('barberia_id', barberiaId)
+            .gte('fecha', fechaInicio);
+        
+        if (errorServicios) throw errorServicios;
+        
+        // Cargar barberos
+        const { data: barberos, error: errorBarberos } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('barberia_id', barberiaId)
+            .eq('activo', true);
+        
+        if (errorBarberos) throw errorBarberos;
+        
+        // Guardar datos
+        datosAnalisisIA.servicios = servicios || [];
+        datosAnalisisIA.barberos = barberos || [];
+        
+        if (datosAnalisisIA.servicios.length === 0) {
+            mostrarSinDatosIA();
+        } else {
+            // Generar análisis
+            generarAnalisisCompleto();
+        }
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('Error al cargar datos del análisis');
+        cerrarModalIA();
+    }
+}
+
+function generarAnalisisCompleto() {
+    console.log('🧠 Generando análisis...');
+    
+    // 1. Calcular salud
+    calcularSaludIA();
+    
+    // 2. Generar recomendaciones
+    generarRecomendacionesIA();
+    
+    // 3. Calcular proyección
+    calcularProyeccionIA();
+    
+    // Mostrar contenido
+    document.getElementById('loadingIA').classList.add('hidden');
+    document.getElementById('contenidoIA').classList.remove('hidden');
+}
+
+function calcularSaludIA() {
+    const { servicios } = datosAnalisisIA;
+    
+    const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+    const ticketPromedio = Math.round(totalIngresos / servicios.length);
+    const serviciosPorDia = Math.round(servicios.length / 30);
+    
+    let puntos = 0;
+    
+    // Criterios de puntuación
+    if (totalIngresos > 1000000) puntos += 40;
+    else if (totalIngresos > 500000) puntos += 30;
+    else if (totalIngresos > 250000) puntos += 20;
+    else puntos += 10;
+    
+    if (ticketPromedio > 18000) puntos += 30;
+    else if (ticketPromedio > 15000) puntos += 20;
+    else if (ticketPromedio > 12000) puntos += 10;
+    
+    if (serviciosPorDia > 15) puntos += 30;
+    else if (serviciosPorDia > 10) puntos += 20;
+    else if (serviciosPorDia > 5) puntos += 10;
+    
+    // Determinar estado
+    let emoji, mensaje, color;
+    
+    if (puntos >= 80) {
+        emoji = '🟢';
+        mensaje = '¡EXCELENTE! Tu barbería va muy bien';
+        color = 'text-green-600';
+    } else if (puntos >= 60) {
+        emoji = '🔵';
+        mensaje = 'BIEN - Puedes mejorar algunas cosas';
+        color = 'text-blue-600';
+    } else if (puntos >= 40) {
+        emoji = '🟡';
+        mensaje = 'REGULAR - Necesitas hacer cambios';
+        color = 'text-yellow-600';
+    } else {
+        emoji = '🔴';
+        mensaje = 'URGENTE - Requiere atención';
+        color = 'text-red-600';
+    }
+    
+    document.getElementById('emojiSaludIA').textContent = emoji;
+    document.getElementById('puntajeSaludIA').textContent = `${puntos}/100`;
+    document.getElementById('puntajeSaludIA').className = `text-5xl font-bold mb-3 ${color}`;
+    document.getElementById('mensajeSaludIA').textContent = mensaje;
+}
+
+function generarRecomendacionesIA() {
+    const { servicios } = datosAnalisisIA;
+    const recomendaciones = [];
+    
+    const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+    const ticketPromedio = Math.round(totalIngresos / servicios.length);
+    
+    // RECOMENDACIÓN 1: Ticket Promedio Bajo
+    if (ticketPromedio < 15000) {
+        recomendaciones.push({
+            icono: '💰',
+            titulo: 'GANAR MÁS - Ticket promedio bajo',
+            problema: `Tus clientes gastan solo $${ticketPromedio.toLocaleString('es-CL')} por visita`,
+            solucion: 'Ofrece servicios adicionales: "¿Le agregamos barba por $8.000?"',
+            impacto: `Si 1 de cada 3 acepta, ganarás $${Math.round(servicios.length / 3 * 8000).toLocaleString('es-CL')} extra`,
+            color: 'from-green-400 to-green-600'
+        });
+    }
+    
+    // RECOMENDACIÓN 2: Servicio Popular
+    const servicioStats = {};
+    servicios.forEach(s => {
+        const servicio = s.servicio_principal_nombre;
+        if (!servicioStats[servicio]) {
+            servicioStats[servicio] = { count: 0, total: 0 };
+        }
+        servicioStats[servicio].count++;
+        servicioStats[servicio].total += parseFloat(s.monto_total);
+    });
+    
+    const servicioTop = Object.entries(servicioStats).sort((a, b) => b[1].count - a[1].count)[0];
+    if (servicioTop && servicioTop[1].count > servicios.length * 0.25) {
+        const precioActual = Math.round(servicioTop[1].total / servicioTop[1].count);
+        const precioNuevo = Math.round(precioActual * 1.10);
+        const ganancia = (precioNuevo - precioActual) * servicioTop[1].count;
+        
+        recomendaciones.push({
+            icono: '🔥',
+            titulo: 'OPORTUNIDAD - Tu servicio estrella',
+            problema: `"${servicioTop[0]}" es tu más vendido (${servicioTop[1].count} veces)`,
+            solucion: `Sube precio de $${precioActual.toLocaleString('es-CL')} a $${precioNuevo.toLocaleString('es-CL')} (+10%)`,
+            impacto: `Ganarás $${ganancia.toLocaleString('es-CL')} extra este mes`,
+            color: 'from-purple-400 to-purple-600'
+        });
+    }
+    
+    // RECOMENDACIÓN 3: Días Flojos
+    const porDia = {};
+    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    
+    servicios.forEach(s => {
+        const fecha = new Date(s.fecha + 'T00:00:00');
+        const dia = fecha.getDay();
+        porDia[dia] = (porDia[dia] || 0) + 1;
+    });
+    
+    const diaBajo = Object.entries(porDia).sort((a, b) => a[1] - b[1])[0];
+    const promedio = Object.values(porDia).reduce((a, b) => a + b, 0) / Object.keys(porDia).length;
+    
+    if (diaBajo && diaBajo[1] < promedio * 0.6) {
+        const potencial = Math.round((promedio - diaBajo[1]) * ticketPromedio * 4);
+        
+        recomendaciones.push({
+            icono: '📅',
+            titulo: 'OPTIMIZAR - Día flojo detectado',
+            problema: `Los ${diasSemana[diaBajo[0]]}s tienen pocos clientes (${diaBajo[1]} servicios)`,
+            solucion: `Promoción especial SOLO ${diasSemana[diaBajo[0]]}s: "2x1" o "30% OFF"`,
+            impacto: `Puedes ganar $${potencial.toLocaleString('es-CL')} extra al mes`,
+            color: 'from-yellow-400 to-yellow-600'
+        });
+    }
+    
+    // Mostrar recomendaciones
+    const container = document.getElementById('recomendacionesIA');
+    
+    if (recomendaciones.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-gray-500">✅ Todo bien! No hay recomendaciones urgentes</div>';
+        return;
+    }
+    
+    container.innerHTML = recomendaciones.slice(0, 3).map((rec, i) => `
+        <div class="bg-gradient-to-r ${rec.color} text-white rounded-lg p-5 shadow-lg">
+            <div class="flex items-start">
+                <div class="text-3xl mr-4">${rec.icono}</div>
+                <div class="flex-1">
+                    <h5 class="font-bold text-lg mb-2">${i + 1}. ${rec.titulo}</h5>
+                    <p class="text-sm opacity-90 mb-2">📊 ${rec.problema}</p>
+                    <p class="text-sm font-semibold mb-2">✅ ${rec.solucion}</p>
+                    <p class="text-sm bg-white bg-opacity-20 rounded px-3 py-1 inline-block">💰 ${rec.impacto}</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function calcularProyeccionIA() {
+    const { servicios } = datosAnalisisIA;
+    
+    const totalIngresos = servicios.reduce((sum, s) => sum + parseFloat(s.monto_total || 0), 0);
+    const serviciosPorDia = servicios.length / 30;
+    const ticketPromedio = Math.round(totalIngresos / servicios.length);
+    
+    const proyeccion = Math.round(serviciosPorDia * 30 * ticketPromedio);
+    const meta = Math.round(proyeccion * 1.10);
+    
+    document.getElementById('proyeccionIA').textContent = `$${proyeccion.toLocaleString('es-CL')}`;
+    document.getElementById('metaIA').textContent = `$${meta.toLocaleString('es-CL')}`;
+    document.getElementById('explicacionProyeccionIA').textContent = 
+        `Basado en ${Math.round(serviciosPorDia)} servicios/día × $${ticketPromedio.toLocaleString('es-CL')} ticket promedio`;
+}
+
+function mostrarSinDatosIA() {
+    document.getElementById('loadingIA').classList.add('hidden');
+    document.getElementById('contenidoIA').classList.remove('hidden');
+    document.getElementById('recomendacionesIA').innerHTML = `
+        <div class="text-center py-12">
+            <div class="text-6xl mb-4">📊</div>
+            <p class="text-xl text-gray-600">Sin datos suficientes para analizar</p>
+            <p class="text-gray-500 mt-2">Esta barbería no tiene servicios registrados en los últimos 30 días</p>
+        </div>
+    `;
+}
+
+function cerrarModalIA() {
+    document.getElementById('modalConsultorIA').classList.add('hidden');
+}
+
+function descargarInformePDF() {
+    const { barberiaNombre, servicios } = datosAnalisisIA;
+    
+    if (!window.jspdf) {
+        alert('❌ Error: Librería PDF no cargada');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(24);
+    doc.setTextColor(147, 51, 234); // Purple
+    doc.text('CONSULTOR IA', 20, 20);
+    
+    doc.setFontSize(18);
+    doc.setTextColor(0, 0, 0);
+    doc.text(barberiaNombre, 20, 35);
+    
+    // Fecha
+    doc.setFontSize(12);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-CL')}`, 20, 45);
+    
+    // Salud del Negocio
+    const salud = document.getElementById('puntajeSaludIA').textContent;
+    const mensajeSalud = document.getElementById('mensajeSaludIA').textContent;
+    
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text('SALUD DEL NEGOCIO', 20, 60);
+    doc.setFontSize(14);
+    doc.text(`Puntuacion: ${salud}`, 20, 70);
+    doc.setFontSize(12);
+    doc.text(mensajeSalud, 20, 80);
+    
+    // Recomendaciones
+    const recomendaciones = document.querySelectorAll('#recomendacionesIA > div');
+    let y = 95;
+    
+    doc.setFontSize(16);
+    doc.text('RECOMENDACIONES PRINCIPALES', 20, y);
+    y += 10;
+    
+    recomendaciones.forEach((rec, i) => {
+        if (y > 250) {
+            doc.addPage();
+            y = 20;
+        }
+        
+        const titulo = rec.querySelector('h5').textContent;
+        const problema = rec.querySelectorAll('p')[0].textContent;
+        const solucion = rec.querySelectorAll('p')[1].textContent;
+        const impacto = rec.querySelectorAll('p')[2].textContent;
+        
+        doc.setFontSize(14);
+        doc.setTextColor(147, 51, 234);
+        doc.text(titulo, 20, y);
+        y += 8;
+        
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text(problema, 20, y, { maxWidth: 170 });
+        y += 8;
+        
+        doc.text(solucion, 20, y, { maxWidth: 170 });
+        y += 8;
+        
+        doc.setTextColor(34, 197, 94); // Green
+        doc.text(impacto, 20, y);
+        y += 15;
+        
+        doc.setTextColor(0, 0, 0);
+    });
+    
+    // Proyección
+    if (y > 220) {
+        doc.addPage();
+        y = 20;
+    }
+    
+    const proyeccion = document.getElementById('proyeccionIA').textContent;
+    const meta = document.getElementById('metaIA').textContent;
+    const explicacion = document.getElementById('explicacionProyeccionIA').textContent;
+    
+    doc.setFontSize(16);
+    doc.text('PROYECCION PROXIMO MES', 20, y);
+    y += 10;
+    
+    doc.setFontSize(14);
+    doc.text(`Proyeccion: ${proyeccion}`, 20, y);
+    y += 8;
+    doc.text(`Meta Sugerida: ${meta}`, 20, y);
+    y += 8;
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text(explicacion, 20, y);
+    
+    // Descargar
+    const fecha = new Date().toISOString().split('T')[0];
+    doc.save(`informe-ia-${barberiaNombre}-${fecha}.pdf`);
+    
+    console.log('📥 PDF generado y descargado');
+}
         // ========== FIN DEL CÓDIGO NUEVO ==========
  
     </script>
