@@ -314,6 +314,19 @@ if (!barberia.activa) {
         localStorage.setItem('userRole', userRole);
         
         console.log('✅ Login exitoso, iniciando aplicación...');
+        // VALIDACIÓN FINAL antes de inicializar
+        console.log('🔍 VALIDACIÓN FINAL:', {
+            'window.CURRENT_BARBERIA_ID': window.CURRENT_BARBERIA_ID,
+            'window.CURRENT_BARBERIA_DATA': window.CURRENT_BARBERIA_DATA,
+            'currentUser.barberia_id': currentUser.barberia_id,
+            'currentBarberia.id': currentBarberia.id
+        });
+        
+        if (!window.CURRENT_BARBERIA_ID) {
+            console.error('❌ CRÍTICO: barberia_id perdido antes de inicializar app');
+            alert('Error crítico: barberia_id no disponible. Recarga la página.');
+            return;
+        }
         initializeApp();
         
     } catch (error) {
@@ -347,6 +360,12 @@ if (!barberia.activa) {
         // INICIALIZACIÓN DE LA APP
         // ===============================
         function initializeApp() {
+            // DEBUG: Verificar estado al inicializar
+            console.log('🔍 ESTADO AL INICIALIZAR APP:', {
+                'window.CURRENT_BARBERIA_ID': window.CURRENT_BARBERIA_ID,
+                'currentUser': currentUser,
+                'currentBarberia': currentBarberia
+            });
             // Ocultar login, mostrar app
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
@@ -593,6 +612,20 @@ function calcularDiasRestantes(fechaHasta) {
             }
             
             try {
+
+                // VALIDACIÓN CRÍTICA DEL barberia_id
+    if (!window.CURRENT_BARBERIA_ID) {
+        console.error('❌ CURRENT_BARBERIA_ID no está definido');
+        console.error('❌ currentUser:', currentUser);
+        console.error('❌ currentBarberia:', currentBarberia);
+        console.error('❌ window.CURRENT_BARBERIA_DATA:', window.CURRENT_BARBERIA_DATA);
+        alert('Error del sistema: No se puede identificar la barbería. Por favor, cierra sesión e inicia sesión nuevamente.');
+        hideLoading();
+        return;
+    }
+
+    console.log('✅ Validación barberia_id exitosa:', window.CURRENT_BARBERIA_ID);
+
                    const nuevoServicio = {
     barberia_id: window.CURRENT_BARBERIA_ID,
     realizado_por_id: currentUser.id,
