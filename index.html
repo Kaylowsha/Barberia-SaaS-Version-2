@@ -441,6 +441,7 @@ function calcularDiasRestantes(fechaHasta) {
             { id: 'barberos', label: 'Gestión Barberos', icon: 'fa-users' },
             { id: 'cierre', label: 'Cierre de Caja', icon: 'fa-cash-register' },
             { id: 'estadisticas', label: 'Estadísticas', icon: 'fa-chart-line' }
+            { id: 'configuracion', label: 'Configuración', icon: 'fa-cog' }
         );
     }
     
@@ -491,9 +492,12 @@ function calcularDiasRestantes(fechaHasta) {
                 case 'estadisticas':
                     loadEstadisticas();
                     break;
-                    case 'agenda':
-    loadAgenda();
-    break;
+                case 'configuracion':
+                    loadConfiguracion();
+                    break;
+                case 'agenda':
+                    loadAgenda();
+                    break;
                 default:
                     document.getElementById('contentArea').innerHTML = '<p>Sección en desarrollo...</p>';
             }
@@ -3915,6 +3919,37 @@ function mostrarCitasAgenda(citas, periodo) {
             });
         }
         
+// ===============================
+// PESTAÑA: CONFIGURACIÓN
+// ===============================
+function loadConfiguracion() {
+    console.log('⚙️ Cargando configuración...');
+    
+    // Verificar que sea admin
+    if (userRole !== 'admin') {
+        document.getElementById('contentArea').innerHTML = '<div class="text-red-600">❌ Sin permisos de administrador</div>';
+        return;
+    }
+    
+    document.getElementById('contentArea').innerHTML = `
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">
+                <i class="fas fa-cog mr-2"></i>Configuración de Servicios
+            </h2>
+            <p class="text-gray-600 mb-6">Gestiona los servicios y precios de tu barbería</p>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-bold mb-4">🔧 Próximamente</h3>
+                <p class="text-gray-600">Esta sección permitirá:</p>
+                <ul class="list-disc list-inside mt-2 text-gray-600">
+                    <li>Agregar nuevos servicios</li>
+                    <li>Editar precios</li>
+                    <li>Activar/desactivar servicios</li>
+                </ul>
+            </div>
+        </div>
+    `;
+}
         // ===============================
         // LOGOUT
         // ===============================
