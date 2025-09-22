@@ -625,6 +625,27 @@ function calcularDiasRestantes(fechaHasta) {
     }
 
     console.log('✅ Validación barberia_id exitosa:', window.CURRENT_BARBERIA_ID);
+                
+                // Obtener el último código usado en esta barbería
+                console.log('🔢 Obteniendo último código de la barbería...');
+                const { data: ultimoCodigo, error: errorCodigo } = await supabase
+                    .from('citas')
+                    .select('codigo_diario')
+                    .eq('barberia_id', window.CURRENT_BARBERIA_ID)
+                    .order('codigo_diario', { ascending: false })
+                    .limit(1);
+
+                let nuevoCodigo = 1; // Código por defecto para el primer servicio
+                
+                if (errorCodigo) {
+                    console.log('⚠️ Error consultando códigos (usando 1):', errorCodigo.message);
+                } else if (ultimoCodigo && ultimoCodigo.length > 0 && ultimoCodigo[0].codigo_diario) {
+                    nuevoCodigo = ultimoCodigo[0].codigo_diario + 1;
+                    console.log('✅ Último código encontrado:', ultimoCodigo[0].codigo_diario, '→ Nuevo:', nuevoCodigo);
+                } else {
+                    console.log('📝 Primera vez de la barbería, usando código 1');
+                }
+
 
                    const nuevoServicio = {
     barberia_id: window.CURRENT_BARBERIA_ID,
