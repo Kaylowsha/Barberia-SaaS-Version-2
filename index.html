@@ -663,10 +663,21 @@ function calcularDiasRestantes(fechaHasta) {
     forma_pago: formaPago,
     notas: notas || null,
     fecha: getFechaChile(),
+    codigo_diario: nuevoCodigo,
     created_at: getTimestampChile()
 };
                 
-                console.log('Guardando servicio:', nuevoServicio);
+                // DEBUG: Ver TODOS los códigos existentes
+const { data: todosLosCodigos } = await supabase
+    .from('citas')
+    .select('id, codigo_diario, fecha, created_at')
+    .eq('barberia_id', window.CURRENT_BARBERIA_ID)
+    .order('created_at', { ascending: false })
+    .limit(10);
+console.log('🔍 TODOS los códigos en BD:', todosLosCodigos);
+
+console.log('💾 Guardando servicio con código:', nuevoCodigo);
+console.log('📋 Objeto completo:', nuevoServicio);
                 
                 const { data, error } = await supabase
                     .from('citas')
