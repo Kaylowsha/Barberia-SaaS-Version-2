@@ -636,7 +636,7 @@ function calcularDiasRestantes(fechaHasta) {
                     .from('citas')
                     .select('codigo_diario')
                     .eq('barberia_id', window.CURRENT_BARBERIA_ID)
-                    .order('codigo_diario', { ascending: false })
+                    .order('created_at', { ascending: false })
                     .limit(1);
 
                 let nuevoCodigo = 1; // Código por defecto para el primer servicio
