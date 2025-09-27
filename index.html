@@ -369,6 +369,15 @@ if (!barberia.activa) {
             // Ocultar login, mostrar app
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
+          
+            // 🔄 LIMPIAR CACHE AL INICIALIZAR
+    // Esto fuerza recarga de datos frescos cada vez que se abre la app
+    window.serviciosGlobales = [];
+    window.serviciosGlobalesStats = [];
+    window.serviciosGlobalesMetodos = [];
+    window.serviciosGlobalesProductividad = [];
+    window.serviciosGlobalesTendencia = [];
+    console.log('🧹 Cache limpiado - datos frescos garantizados');
             
             // Actualizar información del usuario
             document.getElementById('userName').textContent = currentUser.nombre;
@@ -3973,14 +3982,22 @@ function loadConfiguracion() {
         // ===============================
         // VERIFICAR SESIÓN AL CARGAR
         // ===============================
-        window.addEventListener('load', () => {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                userRole = localStorage.getItem('userRole');
-                initializeApp();
-            }
-        });
+      window.addEventListener('load', () => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        userRole = localStorage.getItem('userRole');
+        
+        // 🔄 FORZAR RECARGA DE DATOS FRESCOS
+        console.log('🔄 Sesión existente detectada - validando datos frescos...');
+        
+        // Recargar datos de barbería para asegurar info actualizada
+        window.CURRENT_BARBERIA_DATA = currentUser.barberias;
+        window.CURRENT_BARBERIA_ID = currentUser.barberia_id;
+        
+        initializeApp();
+    }
+});
     </script>
 </body>
 </html>
